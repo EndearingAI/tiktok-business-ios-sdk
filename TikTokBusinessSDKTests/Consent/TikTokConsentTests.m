@@ -493,4 +493,54 @@ static IMP originalSharedSession;
     XCTAssertFalse(event.isMatched);
 }
 
+- (void)testInitializationSettlesExactlyOnceAcrossHeldConfigWithdrawalAndRegrant {
+    XCTestExpectation *first = [self expectationWithDescription:@"initial initialization completes before remote config"];
+    XCTestExpectation *denied = [self expectationWithDescription:@"denied initialization completes with error"];
+    XCTestExpectation *regrant = [self expectationWithDescription:@"regranted initialization completes"];
+    __block NSUInteger firstCompletions = 0, deniedCompletions = 0, regrantCompletions = 0;
+
+    [TikTokBusiness setTrackingEnabled:YES];
+    [TikTokBusiness initializeSdk:self.config completionHandler:^(BOOL success, NSError *error) {
+        firstCompletions++;
+        XCTAssertTrue(success);
+        XCTAssertNil(error);
+        [first fulfill];
+    }];
+    XCTAssertEqual(firstCompletions, 1u);
+    [self drain];
+    XCTAssertGreaterThanOrEqual(TikTokConsentURLProtocol.requests.count, 2u);
+    XCTAssertFalse(TikTokBusiness.getInstance.isGlobalConfigFetched);
+
+    [TikTokBusiness setTrackingEnabled:NO];
+    [TikTokBusiness initializeSdk:self.config completionHandler:^(BOOL success, NSError *error) {
+        deniedCompletions++;
+        XCTAssertFalse(success);
+        XCTAssertNotNil(error);
+        [denied fulfill];
+    }];
+    XCTAssertEqual(deniedCompletions, 1u);
+    XCTAssertEqual(firstCompletions, 1u);
+
+    [TikTokBusiness setTrackingEnabled:YES];
+    [TikTokBusiness initializeSdk:self.config completionHandler:^(BOOL success, NSError *error) {
+        regrantCompletions++;
+        XCTAssertTrue(success);
+        XCTAssertNil(error);
+        [regrant fulfill];
+    }];
+    XCTAssertEqual(regrantCompletions, 1u);
+    [self drain];
+
+    // Old and new requests finish together; old-generation callbacks must be discarded
+    // without abandoning or settling an initialization callback a second time.
+    [TikTokConsentURLProtocol finishPendingWithJSON:self.configResponse];
+    [self drain];
+    [self waitForExpectations:@[first, denied, regrant] timeout:1];
+    XCTAssertEqual(firstCompletions, 1u);
+    XCTAssertEqual(deniedCompletions, 1u);
+    XCTAssertEqual(regrantCompletions, 1u);
+    XCTAssertTrue(TikTokBusiness.isInitialized);
+    XCTAssertTrue(TikTokBusiness.getInstance.isGlobalConfigFetched);
+}
+
 @end
