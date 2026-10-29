@@ -22,7 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
-- (NSString *)getOrGenerateAnonymousID;
+- (nullable NSString *)getOrGenerateAnonymousID;
+- (void)resetTrackingIdentity;
 
 - (NSString *)generateNewAnonymousID;
 

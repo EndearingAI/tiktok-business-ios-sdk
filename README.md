@@ -1,3 +1,10 @@
+# EndearingAI consent-control fork
+
+This maintained fork of TikTok iOS SDK 1.7.2 defaults advertising collection to off,
+adds reversible native consent and timestamp-preserving event retries, and disables
+bundled crash capture. Read [CONSENT_CONTROL.md](CONSENT_CONTROL.md) before integrating.
+The upstream documentation follows.
+
 > [!IMPORTANT]
 > Use of the TikTok App Events SDK is governed by the [TikTok For Business Commercial Terms of Service](https://ads.tiktok.com/i18n/official/policy/commercial-terms-of-service). By using the TikTok App Events SDK, you also agree to the [TikTok Business Products (Data) Terms](https://ads.tiktok.com/i18n/official/policy/business-products-terms) and that you will not share sensitive data with TikTok.
 

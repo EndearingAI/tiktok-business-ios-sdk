@@ -8,6 +8,7 @@
 #import "TikTokIdentifyUtility.h"
 #import "TikTokTypeUtility.h"
 #import "TikTokAppEventUtility.h"
+#import "TikTokBusiness+private.h"
 
 #define TT_last_session_id_key        @"last_session_id_key"
 #define TT_last_session_time_key      @"last_session_time_key"
@@ -37,32 +38,38 @@
         _externalID = nil;
         _isIdentified = NO;
         _externalUserName = nil;
-        [self _createSessionInfo];
+
     }
     return self;
 }
 
 - (NSString *)getOrGenerateAnonymousID
 {
-    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
-    NSString *anonymousIDkey = @"AnonymousID";
-    NSString *anonymousID = nil;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+        NSString *anonymousIDkey = @"AnonymousID";
+        NSString *anonymousID = nil;
     
-    if ([preferences objectForKey:anonymousIDkey] == nil)
-    {
-        anonymousID = [self generateNewAnonymousID];
-        [preferences setObject:anonymousID forKey:anonymousIDkey];
-        [preferences synchronize];
-    }   else {
-        anonymousID = [preferences stringForKey:anonymousIDkey];
+        if ([preferences objectForKey:anonymousIDkey] == nil)
+        {
+            anonymousID = [self generateNewAnonymousID];
+            [preferences setObject:anonymousID forKey:anonymousIDkey];
+            [preferences synchronize];
+        }   else {
+            anonymousID = [preferences stringForKey:anonymousIDkey];
+        }
+        return anonymousID;
     }
-    return anonymousID;
 }
 
 - (NSString *)generateNewAnonymousID
 {
-    NSString *uuid = [[NSUUID UUID] UUIDString];
-    return uuid;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        NSString *uuid = [[NSUUID UUID] UUIDString];
+        return uuid;
+    }
 }
 
 - (void)setUserInfoWithExternalID:(nullable NSString *)externalID
@@ -71,42 +78,48 @@
                             email:(nullable NSString *)email
                            origin:(nullable NSString *)origin
 {
-    if ([self _isSHA256HashedString:externalID]) {
-        self.externalID = externalID;
-    } else {
-        self.externalID = [TikTokTypeUtility toSha256:externalID origin:origin];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        if ([self _isSHA256HashedString:externalID]) {
+            self.externalID = externalID;
+        } else {
+            self.externalID = [TikTokTypeUtility toSha256:externalID origin:origin];
+        }
+
+        if ([self _isSHA256HashedString:externalUserName]) {
+            self.externalUserName = externalUserName;
+        } else {
+            self.externalUserName = [TikTokTypeUtility toSha256:externalUserName origin:origin];
+        }
+
+        if ([self _isSHA256HashedString:phoneNumber]) {
+            self.phoneNumber = phoneNumber;
+        } else {
+            self.phoneNumber = [TikTokTypeUtility toSha256:phoneNumber origin:origin];
+        }
+
+        if ([self _isSHA256HashedString:email]) {
+            self.email = email;
+        } else {
+            self.email = [TikTokTypeUtility toSha256:email origin:origin];
+        }
+
+        self.isIdentified = YES;
     }
-    
-    if ([self _isSHA256HashedString:externalUserName]) {
-        self.externalUserName = externalUserName;
-    } else {
-        self.externalUserName = [TikTokTypeUtility toSha256:externalUserName origin:origin];
-    }
-    
-    if ([self _isSHA256HashedString:phoneNumber]) {
-        self.phoneNumber = phoneNumber;
-    } else {
-        self.phoneNumber = [TikTokTypeUtility toSha256:phoneNumber origin:origin];
-    }
-    
-    if ([self _isSHA256HashedString:email]) {
-        self.email = email;
-    } else {
-        self.email = [TikTokTypeUtility toSha256:email origin:origin];
-    }
-    
-    self.isIdentified = YES;
 }
 
 - (NSDictionary *)getUserInfoDictionary
 {
-    NSMutableDictionary *userInfo = [NSMutableDictionary new];
-    [TikTokTypeUtility dictionary:userInfo setObject:self.externalID forKey:@"external_id"];
-    [TikTokTypeUtility dictionary:userInfo setObject:self.phoneNumber forKey:@"phone_number"];
-    [TikTokTypeUtility dictionary:userInfo setObject:self.email forKey:@"email"];
-    [TikTokTypeUtility dictionary:userInfo setObject:self.externalUserName forKey:@"external_username"];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return @{};
+        NSMutableDictionary *userInfo = [NSMutableDictionary new];
+        [TikTokTypeUtility dictionary:userInfo setObject:self.externalID forKey:@"external_id"];
+        [TikTokTypeUtility dictionary:userInfo setObject:self.phoneNumber forKey:@"phone_number"];
+        [TikTokTypeUtility dictionary:userInfo setObject:self.email forKey:@"email"];
+        [TikTokTypeUtility dictionary:userInfo setObject:self.externalUserName forKey:@"external_username"];
     
-    return userInfo.copy;
+        return userInfo.copy;
+    }
 }
 
 - (void)resetUserInfo
@@ -141,7 +154,21 @@
 }
 
 - (NSString *)appSessionID {
-    return self.currentAppSessionID;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        if (!self.currentAppSessionID) [self _createSessionInfo];
+        return self.currentAppSessionID;
+    }
+}
+
+- (void)resetTrackingIdentity {
+    [self resetUserInfo];
+    self.currentAppSessionID = nil;
+    self.currentSessionStartTime = nil;
+    self.lastAppSessionID = nil;
+    self.lastSessionStartTime = nil;
+    [NSUserDefaults.standardUserDefaults removeObjectForKey:TT_last_session_id_key];
+    [NSUserDefaults.standardUserDefaults removeObjectForKey:TT_last_session_time_key];
 }
 
 - (BOOL)_isSHA256HashedString:(NSString *)string {

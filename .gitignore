@@ -21,3 +21,9 @@ Products/
 /TikTokBusinessSDK.xcodeproj/project.xcworkspace/xcuserdata/bytedance.xcuserdatad/UserInterfaceState.xcuserstate
 *.xcbkptlist
 /TikTokBusinessSDK.xcodeproj/xcuserdata/bytedance.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+
+# Maintained native privacy regression test scheme.
+!TikTokBusinessSDK.xcodeproj/xcshareddata/
+!TikTokBusinessSDK.xcodeproj/xcshareddata/xcschemes/
+TikTokBusinessSDK.xcodeproj/xcshareddata/xcschemes/*
+!TikTokBusinessSDK.xcodeproj/xcshareddata/xcschemes/TikTokConsentTests.xcscheme

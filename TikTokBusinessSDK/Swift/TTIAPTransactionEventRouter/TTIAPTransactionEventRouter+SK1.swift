@@ -11,33 +11,38 @@ import StoreKit
 @available(iOS 15.0, *)
 extension TTIAPTransactionEventRouter {
     func routeSK1(_ transaction: SKPaymentTransaction) async {
-        let fetcher = TTSK1ProductFetcher()
-        let product = await fetcher.product(for: transaction.payment.productIdentifier)
-        let eventName = Self.eventName(transaction)
-        let transactionId: String = transaction.transactionIdentifier ?? ""
-        guard let eventName, let product else {
-            return
+        guard consent.isCurrent, !Task.isCancelled else { return }
+        let fetcher = TTSK1ProductFetcher(consent: consent)
+        guard let productID = consent.perform({ transaction.payment.productIdentifier }) else { return }
+        let product = await fetcher.product(for: productID)
+        guard consent.isCurrent, !Task.isCancelled else { return }
+        consent.perform { () -> Void in
+            let eventName = Self.eventName(transaction)
+            let transactionId: String = transaction.transactionIdentifier ?? ""
+            guard let eventName, let product else {
+                return
+            }
+
+            if TTIAPTransactionCacheManager.shared.cacheContains(transactionId: transactionId, productId: product.productIdentifier, eventName: eventName, consent: consent) {
+                return
+            }
+
+            TTIAPTransactionCacheManager.shared.cache(transactionId: transactionId, productId: product.productIdentifier, eventName: eventName, consent: consent)
+
+            let totalAmount: Double = Double(transaction.payment.quantity) * product.price.doubleValue
+
+            var eventParams = Self.eventParams(transaction, product: product)
+            eventParams.updateValue(String(totalAmount), forKey: "value")
+            eventParams["storekit_version"] = 1
+            let event = TikTokBaseEvent.init(eventName: eventName, properties: eventParams, eventId: "")
+            TikTokBusiness.trackTTEvent(event)
+
+            if TikTokBusiness.isPayShowTrackEnabled {
+                eventParams.updateValue("enhanced_data_postback", forKey: "monitor_type")
+                TikTokBusiness.trackTTEvent(.init(eventName: "pay_show", properties: eventParams, eventId: ""))
+            }
+            logger.debugMessage("SK1 track event: \(eventName), properties: \(eventParams)")
         }
-        
-        if await TTIAPTransactionCacheManager.shared.cacheContains(transactionId: transactionId, productId: product.productIdentifier, eventName: eventName) {
-            return
-        }
-        
-        await TTIAPTransactionCacheManager.shared.cache(transactionId: transactionId, productId: product.productIdentifier, eventName: eventName)
-        
-        let totalAmount: Double = Double(transaction.payment.quantity) * product.price.doubleValue
-        
-        var eventParams = Self.eventParams(transaction, product: product)
-        eventParams.updateValue(String(totalAmount), forKey: "value")
-        eventParams["storekit_version"] = 1
-        let event = TikTokBaseEvent.init(eventName: eventName, properties: eventParams, eventId: "")
-        TikTokBusiness.trackTTEvent(event)
-        
-        if TikTokBusiness.isPayShowTrackEnabled {
-            eventParams.updateValue("enhanced_data_postback", forKey: "monitor_type")
-            TikTokBusiness.trackTTEvent(.init(eventName: "pay_show", properties: eventParams, eventId: ""))
-        }
-        logger.debugMessage("SK1 track event: \(eventName), properties: \(eventParams)")
     }
     
     static func eventName(_ transaction: SKPaymentTransaction) -> String? {

@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL isRemoteSwitchOn;
 @property (nonatomic) BOOL isGlobalConfigFetched;
 @property (nonatomic) NSString *accessToken;
-@property (nonatomic) NSString *anonymousID;
+@property (nonatomic, nullable) NSString *anonymousID;
 @property (nonatomic, assign, readonly) BOOL isDebugMode;
 @property (nonatomic, assign, readonly, class) BOOL isPayShowTrackEnabled;
 @property (nonatomic, assign, readonly) UInt64 storeKit2ObserveInterval;
@@ -123,9 +123,23 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)trackTTEvent: (TikTokBaseEvent *)event;
 
 /**
- * @brief Use this method to enable or disable event tracking. Tracked events will still be cached locally until tracking is enabled again
+ * Enqueue a verified event using event.eventId as the wire event_id and occurredAt
+ * as the wire timestamp (UTC ISO-8601, seconds). The ID must be stable across retries.
+ * Returns YES when accepted locally, not a provider delivery acknowledgement.
+ * Returns NO while denied/uninitialized or when the name, ID or date is invalid.
+ */
++ (BOOL)trackTTEvent:(TikTokBaseEvent *)event occurredAt:(NSDate *)occurredAt;
+
+/**
+ * @brief Advertising consent is OFF at every process start. Explicitly grant only after
+ * app consent and ATT authorization. Disabling stops collection and future requests,
+ * discards queued events and identities, and fences callbacks from the previous grant.
+ * Requests already in flight may complete. Regrant starts with fresh identities.
 */
 + (void)setTrackingEnabled: (BOOL)enabled;
+
+/// Returns nil without current app consent and system ATT authorization.
++ (nullable NSString *)getAnonymousID;
 
 /**
  * @brief Use this method to disable collection of User Agent automatically and set a custom User Agent
@@ -156,9 +170,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)updateAccessToken: (nonnull NSString *)accessToken;
 
 /**
- * @brief Use this method to check if tracking has been enabled internally
- *        This method will return false **ONLY IF** tiktokConfig.disableTracking() is called
- *        before TikTokBusiness.initializeSdk() is called
+ * @brief Returns whether app consent and current system ATT authorization permit tracking.
+ *        Initialization, lifecycle and remote config cannot grant consent.
 */
 + (BOOL)isTrackingEnabled;
 

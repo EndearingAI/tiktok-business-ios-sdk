@@ -26,6 +26,7 @@
 
 #import "TTSDKHTTPRequestSender.h"
 #import "TTSDKNSErrorHelper.h"
+#import "TikTokBusiness+private.h"
 
 @implementation TTSDKHTTPRequestSender
 
@@ -81,18 +82,24 @@
           onFailure:(void (^)(NSHTTPURLResponse *response, NSData *data))failureBlock
             onError:(void (^)(NSError *error))errorBlock
 {
-    NSURLSession *session = [NSURLSession sharedSession];
-    NSURLSessionTask *task = [session
-        dataTaskWithRequest:request
-          completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response, NSError *_Nullable error) {
-              [self handleResponse:response
-                              data:data
-                             error:error
-                         onSuccess:successBlock
-                         onFailure:failureBlock
-                           onError:errorBlock];
-          }];
-    [task resume];
+    NSUInteger generation = [TikTokBusiness trackingConsentGeneration];
+    [TikTokBusiness performWithTrackingConsent:generation block:^{
+        NSURLSessionTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+            [TikTokBusiness performWithTrackingConsent:generation block:^{
+                void (^success)(NSHTTPURLResponse *, NSData *) = ^(NSHTTPURLResponse *result, NSData *body) {
+                    [TikTokBusiness performWithTrackingConsent:generation block:^{ if (successBlock) successBlock(result, body); }];
+                };
+                void (^failure)(NSHTTPURLResponse *, NSData *) = ^(NSHTTPURLResponse *result, NSData *body) {
+                    [TikTokBusiness performWithTrackingConsent:generation block:^{ if (failureBlock) failureBlock(result, body); }];
+                };
+                void (^failed)(NSError *) = ^(NSError *result) {
+                    [TikTokBusiness performWithTrackingConsent:generation block:^{ if (errorBlock) errorBlock(result); }];
+                };
+                [self handleResponse:response data:data error:error onSuccess:success onFailure:failure onError:failed];
+            }];
+        }];
+        [task resume];
+    }];
 }
 
 @end

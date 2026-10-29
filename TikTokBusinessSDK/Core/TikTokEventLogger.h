@@ -40,6 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @brief Add event to queue
  */
 - (void)addEvent:(TikTokAppEvent *)event;
+- (void)shutdown;
 
 /**
  * @brief Flush logic

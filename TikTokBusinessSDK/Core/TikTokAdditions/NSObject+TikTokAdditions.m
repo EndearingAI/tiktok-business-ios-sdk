@@ -43,37 +43,43 @@
 }
 
 - (BOOL)hook_application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:TTSafeString(url.absoluteString) forKey:@"source_url"];
-    [defaults setObject:TTSafeString([options objectForKey:UIApplicationOpenURLOptionsSourceApplicationKey]) forKey:@"refer"];
-    [defaults synchronize];
+    @synchronized (TikTokBusiness.class) {
+        if ([TikTokBusiness isTrackingEnabled]) {
+            NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+            [defaults setObject:TTSafeString(url.absoluteString) forKey:@"source_url"];
+            [defaults setObject:TTSafeString(options[UIApplicationOpenURLOptionsSourceApplicationKey]) forKey:@"refer"];
+        }
+    }
     return [self hook_application:application openURL:url options:options];
 }
 
 + (void)handleDidFinishLaunchingNotification:(NSNotification *)notification {
-    NSDictionary *launchOptions = notification.userInfo;
-    NSURL *launchURL = [launchOptions valueForKey:UIApplicationLaunchOptionsURLKey];
-    NSString *sourceApp = [launchOptions valueForKey:UIApplicationLaunchOptionsSourceApplicationKey];
-    UIApplicationShortcutItem *item = [launchOptions valueForKey:UIApplicationLaunchOptionsShortcutItemKey];
-    NSDictionary *notiDict = [launchOptions valueForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        NSDictionary *launchOptions = notification.userInfo;
+        NSURL *launchURL = [launchOptions valueForKey:UIApplicationLaunchOptionsURLKey];
+        NSString *sourceApp = [launchOptions valueForKey:UIApplicationLaunchOptionsSourceApplicationKey];
+        UIApplicationShortcutItem *item = [launchOptions valueForKey:UIApplicationLaunchOptionsShortcutItemKey];
+        NSDictionary *notiDict = [launchOptions valueForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
     
-    NSString *refer = nil;
-    if (sourceApp) {
-        return;
-    } else if (item) {
-        refer = item.localizedTitle;
-    } else if (notiDict) {
-        NSError *error = nil;
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:notiDict options:NSJSONWritingPrettyPrinted error:&error];
-        refer = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-    } else if (!item && !notiDict) {
-        refer = @"";
+        NSString *refer = nil;
+        if (sourceApp) {
+            return;
+        } else if (item) {
+            refer = item.localizedTitle;
+        } else if (notiDict) {
+            NSError *error = nil;
+            NSData *jsonData = [NSJSONSerialization dataWithJSONObject:notiDict options:NSJSONWritingPrettyPrinted error:&error];
+            refer = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        } else if (!item && !notiDict) {
+            refer = @"";
+        }
+
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:TTSafeString(launchURL.absoluteString) forKey:@"source_url"];
+        [defaults setObject:TTSafeString(refer) forKey:@"refer"];
+        [defaults synchronize];
     }
-    
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults setObject:TTSafeString(launchURL.absoluteString) forKey:@"source_url"];
-    [defaults setObject:TTSafeString(refer) forKey:@"refer"];
-    [defaults synchronize];
 }
 
 @end

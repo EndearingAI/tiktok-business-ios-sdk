@@ -8,6 +8,7 @@
 
 #import "TikTokDebugInfo.h"
 #import "TikTokTypeUtility.h"
+#import "TikTokBusiness+private.h"
 #import <sys/sysctl.h>
 #import "TikTokAppEventUtility.h"
 #import <UIKit/UIKit.h>
@@ -18,29 +19,32 @@
 @implementation TikTokDebugInfo
 
 + (NSDictionary *)debugInfo {
-    NSMutableDictionary *debugInfo = [NSMutableDictionary dictionary];
-    NSString *bootTime = [self tt_bootTime];
-    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    NSDictionary *btSDict = [userDefaults objectForKey:TTBTSDictKey];
-    NSArray *bootTimeSArray = TTCheckValidDictionary(btSDict) ? btSDict.allKeys : @[];
-    NSDictionary *btMsDict = [userDefaults objectForKey:TTBTMsDictKey];
-    NSArray *bootTimeMsArray = TTCheckValidDictionary(btMsDict) ? btMsDict.allKeys : @[];
-    
-    [debugInfo setValue:TTSafeString(bootTime) forKey:@"bt"];
-    [debugInfo setValue:bootTimeSArray forKey:@"bt_s"];
-    [debugInfo setValue:bootTimeMsArray forKey:@"bt_ms"];
-    [debugInfo setValue:[self tt_machine_model] forKey:@"machine_model"];
-    [debugInfo setValue:@([self tt_totalDeviceMemory]) forKey:@"memory"];
-    [debugInfo setValue:TTSafeString([self tt_screenResolutionString]) forKey:@"resolution"];
-    [debugInfo setValue:@([self tt_cpuNumber]) forKey:@"cpu_num"];
-    
-    
-    //region info
-    [debugInfo setValue:[self tt_timezoneName] forKey:@"timezone_name"];
-    [debugInfo setValue:[self tt_deviceCity] forKey:@"country_city"];
-    
-    
-    return debugInfo.copy;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return @{};
+        NSMutableDictionary *debugInfo = [NSMutableDictionary dictionary];
+        NSString *bootTime = [self tt_bootTime];
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSDictionary *btSDict = [userDefaults objectForKey:TTBTSDictKey];
+        NSArray *bootTimeSArray = TTCheckValidDictionary(btSDict) ? btSDict.allKeys : @[];
+        NSDictionary *btMsDict = [userDefaults objectForKey:TTBTMsDictKey];
+        NSArray *bootTimeMsArray = TTCheckValidDictionary(btMsDict) ? btMsDict.allKeys : @[];
+
+        [debugInfo setValue:TTSafeString(bootTime) forKey:@"bt"];
+        [debugInfo setValue:bootTimeSArray forKey:@"bt_s"];
+        [debugInfo setValue:bootTimeMsArray forKey:@"bt_ms"];
+        [debugInfo setValue:[self tt_machine_model] forKey:@"machine_model"];
+        [debugInfo setValue:@([self tt_totalDeviceMemory]) forKey:@"memory"];
+        [debugInfo setValue:TTSafeString([self tt_screenResolutionString]) forKey:@"resolution"];
+        [debugInfo setValue:@([self tt_cpuNumber]) forKey:@"cpu_num"];
+
+
+        //region info
+        [debugInfo setValue:[self tt_timezoneName] forKey:@"timezone_name"];
+        [debugInfo setValue:[self tt_deviceCity] forKey:@"country_city"];
+
+
+        return debugInfo.copy;
+    }
 }
 
 + (NSString *)tt_bootTime {

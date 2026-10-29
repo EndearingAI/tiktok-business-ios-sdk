@@ -85,6 +85,8 @@ NS_ASSUME_NONNULL_BEGIN
                    withProperties: (NSDictionary *)properties
                          withType: (NSString *)type
                       withEventId: (NSString *)eventID;
+@property (nonatomic) NSUInteger consentGeneration;
+
 @end
 
 NS_ASSUME_NONNULL_END

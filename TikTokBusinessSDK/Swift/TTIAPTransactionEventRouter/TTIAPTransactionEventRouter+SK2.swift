@@ -11,57 +11,61 @@ import StoreKit
 @available(iOS 15.0, *)
 extension TTIAPTransactionEventRouter {
     func routeSK2(_ transaction: Transaction?, productId: String, isRestored: Bool = false) async {
-        var transactionId: String = ""
-        var originalTransactionId: String = ""
-        if let transaction {
-            transactionId = String(transaction.id)
-            originalTransactionId = String(transaction.originalID)
-        }
+        guard consent.isCurrent, !Task.isCancelled else { return }
         let product = try? await Product.products(for: [productId]).first
         guard let product else {
             return
         }
-        let eventName = Self.eventName(transaction, isRestored: isRestored)
-        
-        if await TTIAPTransactionCacheManager.shared.cacheContains(transactionId: transactionId, productId: productId, eventName: eventName) {
-            return
-        }
-        
-        await TTIAPTransactionCacheManager.shared.cache(transactionId: transactionId, productId: productId, eventName: eventName)
-        
-        let code = Self.eventCode(transaction)
-        let value = Double(transaction?.purchasedQuantity ?? 1) * NSDecimalNumber(decimal: product.price).doubleValue
-        
-        var eventParams: [String: Any] = [:]
-        eventParams.updateValue(String(value), forKey: "value")
-        eventParams.updateValue(code, forKey: "code")
-        eventParams.updateValue("", forKey: "query")
-        eventParams.updateValue("auto", forKey: "type")
-        eventParams.updateValue(Self.eventOrderInfo(transactionId, originalID: originalTransactionId, transactionDate: transaction?.purchaseDate), forKey: "order")
-        
-        eventParams["contents"] = Self.eventContents(transaction, product: product)
-        eventParams["storekit_version"] = 2
-        
-        if let transaction {
-            if #available(iOS 16.0, *) {
-                eventParams["currency"] = transaction.currency?.identifier ?? ""
-            } else {
-                eventParams["currency"] = transaction.currencyCode
+        consent.perform { () -> Void in
+            guard consent.isCurrent, !Task.isCancelled else { return }
+            var transactionId: String = ""
+            var originalTransactionId: String = ""
+            if let transaction {
+                transactionId = String(transaction.id)
+                originalTransactionId = String(transaction.originalID)
             }
-            let jsonString = String.init(data: transaction.jsonRepresentation, encoding: .utf8)
-            eventParams["original_json"] = jsonString
-        } else {
-            eventParams["currency"] = product.priceFormatStyle.currencyCode
-        }
+            let eventName = Self.eventName(transaction, isRestored: isRestored)
         
-        logger.debugMessage("SK2 track event: \(eventName), properties: \(eventParams)")
-        TikTokBusiness.trackTTEvent(.init(eventName: eventName, properties: eventParams, eventId: ""))
+            if TTIAPTransactionCacheManager.shared.cacheContains(transactionId: transactionId, productId: productId, eventName: eventName, consent: consent) {
+                return
+            }
         
-        if TikTokBusiness.isPayShowTrackEnabled {
-            eventParams["monitor_type"] = "enhanced_data_postback"
-            TikTokBusiness.trackTTEvent(.init(eventName: "pay_show",
-                                              properties: eventParams,
-                                              eventId: ""))
+            TTIAPTransactionCacheManager.shared.cache(transactionId: transactionId, productId: productId, eventName: eventName, consent: consent)
+        
+            let code = Self.eventCode(transaction)
+            let value = Double(transaction?.purchasedQuantity ?? 1) * NSDecimalNumber(decimal: product.price).doubleValue
+        
+            var eventParams: [String: Any] = [:]
+            eventParams.updateValue(String(value), forKey: "value")
+            eventParams.updateValue(code, forKey: "code")
+            eventParams.updateValue("", forKey: "query")
+            eventParams.updateValue("auto", forKey: "type")
+            eventParams.updateValue(Self.eventOrderInfo(transactionId, originalID: originalTransactionId, transactionDate: transaction?.purchaseDate), forKey: "order")
+        
+            eventParams["contents"] = Self.eventContents(transaction, product: product)
+            eventParams["storekit_version"] = 2
+        
+            if let transaction {
+                if #available(iOS 16.0, *) {
+                    eventParams["currency"] = transaction.currency?.identifier ?? ""
+                } else {
+                    eventParams["currency"] = transaction.currencyCode
+                }
+                let jsonString = String.init(data: transaction.jsonRepresentation, encoding: .utf8)
+                eventParams["original_json"] = jsonString
+            } else {
+                eventParams["currency"] = product.priceFormatStyle.currencyCode
+            }
+        
+            logger.debugMessage("SK2 track event: \(eventName), properties: \(eventParams)")
+            TikTokBusiness.trackTTEvent(.init(eventName: eventName, properties: eventParams, eventId: ""))
+        
+            if TikTokBusiness.isPayShowTrackEnabled {
+                eventParams["monitor_type"] = "enhanced_data_postback"
+                TikTokBusiness.trackTTEvent(.init(eventName: "pay_show",
+                                                  properties: eventParams,
+                                                  eventId: ""))
+            }
         }
     }
     

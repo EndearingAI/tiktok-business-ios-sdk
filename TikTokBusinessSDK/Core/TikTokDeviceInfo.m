@@ -52,36 +52,74 @@
     self.appVersion = [infoDictionary objectForKey: @"CFBundleShortVersionString"];
     self.appBuild = [infoDictionary objectForKey: (NSString *)kCFBundleVersionKey];
     self.devicePlatform = @"ios";
-    self.deviceIdForAdvertisers = getIDFA();
-    self.deviceVendorId = device.tiktokVendorId;
+
     self.localeInfo = [NSString stringWithFormat:@"%@/%@", [self language], [locale objectForKey:NSLocaleCountryCode]];
-    self.ipInfo = device.tiktokDeviceIp;
-    self.trackingEnabled = device.tiktokUserTrackingEnabled;
+
+    self.trackingEnabled = NO;
     self.deviceName = device.tiktokDeviceName;
     self.systemVersion = device.systemVersion;
     self.deviceQueue = dispatch_queue_create([@"com.TikTokBusinessSDK.device" UTF8String], DISPATCH_QUEUE_CONCURRENT);
     
-    [self updateIdentifier];
+
     
     
     return self;
     
 }
 
-- (void)updateIdentifier {
-    if (self.deviceIdForAdvertisers.length && ![self.deviceIdForAdvertisers isEqualToString:@"00000000-0000-0000-0000-000000000000"]) {
-        return;
+- (void)clearTrackingIdentifiers {
+    @synchronized (TikTokBusiness.class) {
+        _deviceIdForAdvertisers = nil;
+        _deviceVendorId = nil;
+        _ipInfo = nil;
+        _trackingEnabled = NO;
     }
-    self.deviceIdForAdvertisers = getIDFA();
+}
+
+- (void)updateIdentifier {
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        _deviceIdForAdvertisers = getIDFA();
+    }
+}
+
+- (NSString *)deviceIdForAdvertisers {
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        [self updateIdentifier];
+        return _deviceIdForAdvertisers;
+    }
+}
+
+- (BOOL)trackingEnabled {
+    return [TikTokBusiness isTrackingEnabled];
+}
+
+- (NSString *)deviceVendorId {
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        return UIDevice.currentDevice.tiktokVendorId;
+    }
+}
+
+- (NSString *)ipInfo {
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        return UIDevice.currentDevice.tiktokDeviceIp;
+    }
 }
 
 - (NSString *)getUserAgent
 {
-    return [TikTokUserAgentCollector singleton].userAgent;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        return [TikTokUserAgentCollector singleton].userAgent;
+    }
 }
 
 
 static NSString * getIDFA(void) {
+    if (![TikTokBusiness isTrackingEnabled]) return nil;
     NSNumber *idfaStartTime = [TikTokAppEventUtility getCurrentTimestampAsNumber];
     ASIdentifierManager *sharedASIdentifierManager = [ASIdentifierManager sharedManager];
     NSUUID *adID = [sharedASIdentifierManager advertisingIdentifier];
@@ -165,7 +203,10 @@ static NSString* phoneResolution(void)
 
 - (NSString*)fallbackUserAgent
 {
-    return [NSString stringWithFormat:@"%@ %@ %@ %@ %@ %@", appNameAndVersion(), deviceName(), deviceVersion(), CFNetworkVersion(), DarwinVersion(), phoneResolution()];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        return [NSString stringWithFormat:@"%@ %@ %@ %@ %@ %@", appNameAndVersion(), deviceName(), deviceVersion(), CFNetworkVersion(), DarwinVersion(), phoneResolution()];
+    }
 }
 
 - (NSString *)language {

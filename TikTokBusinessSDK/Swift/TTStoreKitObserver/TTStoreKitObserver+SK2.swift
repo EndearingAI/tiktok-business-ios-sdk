@@ -11,14 +11,15 @@ import StoreKit
 extension TTStoreKitObserver {
     
     func startObserveStoreKit2() {
-        guard pollingTask == nil else { return }
+        guard pollingTask == nil, consent.isCurrent else { return }
+        let consent = self.consent
         debugMessage("start SK2 observe.")
         pollingTask = Task.detached { [weak self] in
             guard let self = self else { return }
             
             await self.handleInitialTransactions()
             
-            while !Task.isCancelled {
+            while !Task.isCancelled && consent.isCurrent {
                 await self.debugMessage("fetchNewTransactions.")
                 await self.fetchNewTransactions()
                 
@@ -38,11 +39,12 @@ extension TTStoreKitObserver {
     }
     
     fileprivate func handleInitialTransactions() async {
-        guard isObserving else { return }
+        guard isObserving, consent.isCurrent, !Task.isCancelled else { return }
         
-        let lastCheckDate = await TTIAPTransactionCacheManager.shared.lastCheckedDate
+        let lastCheckDate = TTIAPTransactionCacheManager.shared.lastCheckedDate
         debugMessage("handleInitialTransactions.")
         for await result in Transaction.currentEntitlements {
+            guard consent.isCurrent, !Task.isCancelled else { return }
             guard
                 case .verified(let transaction) = result,
                 transaction.purchaseDate >= lastCheckDate
@@ -54,78 +56,65 @@ extension TTStoreKitObserver {
     }
     
     fileprivate func fetchNewTransactions() async {
-        guard isObserving else { return }
-        let lastCheckDate = await TTIAPTransactionCacheManager.shared.lastCheckedDate
+        guard isObserving, consent.isCurrent, !Task.isCancelled else { return }
+        let lastCheckDate = TTIAPTransactionCacheManager.shared.lastCheckedDate
         var latestTransactionDate: Date = lastCheckDate
         var newTransactions: [Transaction] = []
-        do {
-            let unfinishedTransactions: [UInt64] = try await Transaction.unfinished.collect().map { result in
-                if case .verified(let transaction) = result {
-                    return transaction.id
-                } else {
-                    return 0
-                }
-            }.filter({ $0 > 0 })
-            
-            for result in try await Transaction.all.collect() {
-                guard case .verified(let transaction) = result else { continue }
+        guard consent.isCurrent, !Task.isCancelled else { return }
+        var unfinishedTransactions: Set<UInt64> = []
+        for await result in Transaction.unfinished {
+            guard consent.isCurrent, !Task.isCancelled else { return }
+            if case .verified(let transaction) = result { unfinishedTransactions.insert(transaction.id) }
+        }
+        guard consent.isCurrent, !Task.isCancelled else { return }
+        for await result in Transaction.all {
+            guard consent.isCurrent, !Task.isCancelled else { return }
+            guard case .verified(let transaction) = result else { continue }
                 
-                if unfinishedTransactions.contains(transaction.id) {
-                    continue
-                }
+            if unfinishedTransactions.contains(transaction.id) {
+                continue
+            }
                 
-                if transaction.revocationDate != nil {
-                    continue
-                }
+            if transaction.revocationDate != nil {
+                continue
+            }
                 
-                if let expirationDate = transaction.expirationDate, expirationDate < Date() {
-                    continue
-                }
+            if let expirationDate = transaction.expirationDate, expirationDate < Date() {
+                continue
+            }
                 
-                if transaction.purchaseDate > lastCheckDate {
-                    newTransactions.append(transaction)
+            if transaction.purchaseDate > lastCheckDate {
+                newTransactions.append(transaction)
                     
-                    if transaction.purchaseDate > latestTransactionDate {
-                        latestTransactionDate = transaction.purchaseDate
-                    }
+                if transaction.purchaseDate > latestTransactionDate {
+                    latestTransactionDate = transaction.purchaseDate
                 }
             }
-        } catch {
-            monitorFetchNewTransactionsFailed(error)
         }
         
         newTransactions = newTransactions.sorted(by: { $0.purchaseDate < $1.purchaseDate })
         for transaction in newTransactions {
+            guard consent.isCurrent, !Task.isCancelled else { return }
             await handle(transaction: transaction, isRestored: false)
         }
         
         if latestTransactionDate > lastCheckDate {
-            await TTIAPTransactionCacheManager.shared.updateCheckedDate(latestTransactionDate)
+            TTIAPTransactionCacheManager.shared.updateCheckedDate(latestTransactionDate, consent: consent)
         }
     }
     
     fileprivate func handle(transaction: Transaction, isRestored: Bool) async {
+        guard consent.isCurrent, !Task.isCancelled else { return }
         debugMessage("SK2 handle transaction id: \(transaction.id), isRestored: \(isRestored)")
-        let router = TTIAPTransactionEventRouter(extraParams: extraParams)
+        let router = TTIAPTransactionEventRouter(extraParams: extraParams, consent: consent)
         await router.routeSK2(transaction, productId: transaction.productID, isRestored: isRestored)
     }
     
-    func handleFailed(_ productId: String) async {
+    func handleFailed(_ productId: String, consent: TTTrackingConsent = TTTrackingConsent()) async {
+        guard consent.isCurrent, !Task.isCancelled else { return }
         debugMessage("SK2 handle failed product. id: \(productId)")
-        let router = TTIAPTransactionEventRouter(extraParams: extraParams)
+        let router = TTIAPTransactionEventRouter(extraParams: extraParams, consent: consent)
         await router.routeSK2(nil, productId: productId)
     }
     
-    private func monitorFetchNewTransactionsFailed(_ error: Error) {
-        var meta: [String: Any] = [:]
-        meta["error_description"] = error.localizedDescription
-        
-        var monitorProperties: [String: Any] = [:]
-        monitorProperties["monitor_type"] = "metric"
-        monitorProperties["monitor_name"] = "storekit2_fetch_transactions_error"
-        monitorProperties["meta"] = meta
-        
-        let event = TikTokAppEvent.init(eventName: "MonitorEvent", withProperties: monitorProperties, withType: "monitor")
-        TikTokBusiness.getInstance().report(event)
-    }
 }

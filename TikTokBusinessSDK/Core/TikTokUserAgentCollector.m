@@ -8,6 +8,7 @@
 #import "TikTokUserAgentCollector.h"
 #import "TikTokBusinessSDKMacros.h"
 #import "TikTokTypeUtility.h"
+#import "TikTokBusiness+private.h"
 
 static NSString *TT_UserAgent = @"TT_UserAgent";
 
@@ -34,64 +35,53 @@ static NSString *TT_UserAgent = @"TT_UserAgent";
 {
     self = [super init];
     if(self) {
-        self.userAgent = [[NSUserDefaults standardUserDefaults] objectForKey:TT_UserAgent];
+        _userAgent = nil;
         self.updatedUa = NO;
     }
     return self;
 }
 
-- (void)loadUserAgentWithCompletion:(void (^)(NSString * _Nullable))completion
-{
-    if (!self.updatedUa && !TTCheckValidString(self.userAgent)) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (!self.webView) {
-                @try {
-                    self.webView = [[WKWebView alloc] initWithFrame:CGRectZero];
-                } @catch (NSException *exception) {
-                } @finally {
-                }
-            }
-            [self _update];
-        });
-    }
-    if (completion) {
-        completion(self.userAgent);
+- (void)clearUserAgent {
+    _userAgent = nil;
+    self.updatedUa = NO;
+    [NSUserDefaults.standardUserDefaults removeObjectForKey:TT_UserAgent];
+    WKWebView *oldWebView = self.webView;
+    self.webView = nil;
+    dispatch_async(dispatch_get_main_queue(), ^{ [oldWebView stopLoading]; });
+}
+
+- (NSString *)userAgent {
+    @synchronized (TikTokBusiness.class) {
+        return [TikTokBusiness isTrackingEnabled] ? _userAgent : nil;
     }
 }
 
-- (void)_update {
-    if (!self.webView) {
-        return;
-    }
-    tt_weakify(self)
-    [self.webView evaluateJavaScript:@"navigator.userAgent" completionHandler:^(id _Nullable result, NSError * _Nullable error) {
-        tt_strongify(self)
-        if (!TTCheckValidString(result)) {
-            // Don't replace the existing value if fetched nil.
-            return;
-        }
-        self.userAgent = result;
-        self.updatedUa = YES;
-        if (TTCheckValidString(result)) {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-                [userDefaults setObject:result forKey:TT_UserAgent];
-                [userDefaults synchronize];
+- (void)loadUserAgentWithCompletion:(void (^)(NSString * _Nullable))completion {
+    NSUInteger generation = [TikTokBusiness trackingConsentGeneration];
+    if (!generation) { if (completion) completion(nil); return; }
+    [TikTokBusiness performWithTrackingConsent:generation block:^{
+        if (!self.updatedUa && !TTCheckValidString(self.userAgent)) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [TikTokBusiness performWithTrackingConsent:generation block:^{
+                    if (!self.webView) self.webView = [[WKWebView alloc] initWithFrame:CGRectZero];
+                    [self.webView evaluateJavaScript:@"navigator.userAgent" completionHandler:^(id result, NSError *error) {
+                        [TikTokBusiness performWithTrackingConsent:generation block:^{
+                            if (TTCheckValidString(result)) [self setCustomUserAgent:result];
+                        }];
+                    }];
+                }];
             });
         }
+        if (completion) completion(self.userAgent);
     }];
 }
 
-- (void)setCustomUserAgent:(NSString *)userAgent
-{
-    _userAgent = userAgent;
-    self.updatedUa = YES;
-    if (TTCheckValidString(userAgent)) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-            NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-            [userDefaults setObject:userAgent forKey:TT_UserAgent];
-            [userDefaults synchronize];
-        });
+- (void)setCustomUserAgent:(NSString *)userAgent {
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        _userAgent = [userAgent copy];
+        self.updatedUa = YES;
+        if (TTCheckValidString(userAgent)) [NSUserDefaults.standardUserDefaults setObject:userAgent forKey:TT_UserAgent];
     }
 }
 
