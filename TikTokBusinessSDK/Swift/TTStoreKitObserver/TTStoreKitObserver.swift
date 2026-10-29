@@ -23,6 +23,7 @@ public final actor TTStoreKitObserver: NSObject {
 
     var pollingTask: Task<Void, Never>?
     var isObserving = false
+    var consent = TTTrackingConsent()
     let pollInterval: UInt64
     private(set) var extraParams: [String: Any] = [:]
     private let logger = TikTokLogger()
@@ -45,11 +46,23 @@ public final actor TTStoreKitObserver: NSObject {
         #endif
     }
 
-    func startObserving() {
-        guard !isObserving else { return }
+    func startObserving(consent: TTTrackingConsent = TTTrackingConsent()) {
+        guard consent.isCurrent else { return }
+        if isObserving && self.consent.identifier == consent.identifier { return }
+        stopObserving()
+        self.consent = consent
         isObserving = true
         startObserveStoreKit2()
         startObserveStoreKit1()
+    }
+
+    func stopIfMatching(_ requestedConsent: TTTrackingConsent) {
+        if let identifier = requestedConsent.identifier {
+            guard identifier == consent.identifier else { return }
+        } else if consent.isCurrent {
+            return
+        }
+        stopObserving()
     }
 
     func stopObserving() {
@@ -66,14 +79,13 @@ public final actor TTStoreKitObserver: NSObject {
 @available(iOS 15.0, *)
 extension TTStoreKitObserver {
     @objc static func start() {
-        Task {
-            await Self.shared.startObserving()
-        }
+        let consent = TTTrackingConsent()
+        guard consent.isCurrent else { return }
+        Task { await Self.shared.startObserving(consent: consent) }
     }
     
     @objc static func stop() {
-        Task {
-            await Self.shared.stopObserving()
-        }
+        let consent = TTTrackingConsent()
+        Task { await Self.shared.stopIfMatching(consent) }
     }
 }

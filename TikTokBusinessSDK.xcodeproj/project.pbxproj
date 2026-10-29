@@ -36,6 +36,9 @@
 		0ADCF5422538D16900D7B57C /* TikTokRequestHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 0ADCF5402538D16900D7B57C /* TikTokRequestHandler.m */; };
 		0ADCF551253A212A00D7B57C /* TikTokTypeUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = 0ADCF54F253A212A00D7B57C /* TikTokTypeUtility.h */; };
 		0ADCF552253A212A00D7B57C /* TikTokTypeUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = 0ADCF550253A212A00D7B57C /* TikTokTypeUtility.m */; };
+		0C832C423E7799CB5BA0D312 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE639531012B6F8563C6B8D8 /* StoreKit.framework */; };
+		19B35A0F3C7027F9BE15356D /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E936ABA7CB2A6BA5C99A3F9 /* WebKit.framework */; };
+		2A824A4F68C0A0F2ADB60EA2 /* TikTokBusinessSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B23DF8A2502BA73008351FA /* TikTokBusinessSDK.framework */; };
 		2B1138542B9EEDC200215812 /* InitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1138532B9EEDC200215812 /* InitViewController.swift */; };
 		2B1138562B9EF2A900215812 /* IdentifyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1138552B9EF2A900215812 /* IdentifyViewController.swift */; };
 		2B13EE752FEA9E54005D45D1 /* NSObject+TikTokAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 2B3369632C08687500E8D51C /* NSObject+TikTokAdditions.h */; };
@@ -540,6 +543,13 @@
 		2BE60BA12B1F2A2100AB386C /* TikTokConstants.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BE60B9F2B1F2A2100AB386C /* TikTokConstants.m */; };
 		2BEC2CDE2E20E7130086C546 /* TikTokDebugInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BEC2CDC2E20E7130086C546 /* TikTokDebugInfo.h */; };
 		2BEC2CDF2E20E7130086C546 /* TikTokDebugInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 2BEC2CDD2E20E7130086C546 /* TikTokDebugInfo.m */; };
+		2CFD87B58DE166911D695420 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0076672BCE629965C345AE6F /* Foundation.framework */; };
+		3058C8CF1835957A86B61DC3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 90C9F9CA76017CD8FEDEC249 /* main.m */; };
+		3C5AD509B09929155C4FF353 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78F55D4CAE48A8B488888436 /* CoreTelephony.framework */; };
+		44E9092C2EFBCB8B5C0C5349 /* TikTokConsentSwiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99C1E362F396018BA1B6C44 /* TikTokConsentSwiftTests.swift */; };
+		5FFF2FCF3C37F6B66C3999A9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0076672BCE629965C345AE6F /* Foundation.framework */; };
+		68A059F5892483C0A17F4D31 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BEAA9258C0F1001F2E1EA69F /* AVFoundation.framework */; };
+		71F62E7ADA348655A0A9DED8 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C23E82F073F64B0D33004BBA /* AdSupport.framework */; };
 		8B1811DB251EABF800CBBE2E /* TikTokPaymentObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B1811D9251EABF800CBBE2E /* TikTokPaymentObserver.h */; };
 		8B1811DC251EABF800CBBE2E /* TikTokPaymentObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B1811DA251EABF800CBBE2E /* TikTokPaymentObserver.m */; };
 		8B23DF8F2502BA73008351FA /* TikTokBusinessSDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B23DF8D2502BA73008351FA /* TikTokBusinessSDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -574,6 +584,9 @@
 		8BB88F35250A986600EC9D74 /* FormViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB88F34250A986600EC9D74 /* FormViewController.swift */; };
 		8BB88F37250A9A4100EC9D74 /* EventViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BB88F36250A9A4100EC9D74 /* EventViewController.swift */; };
 		8BEA4661252E96F800E12E0E /* PurchaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BEA4660252E96F800E12E0E /* PurchaseViewController.swift */; };
+		A67BFF4C62464F963829B330 /* AppTrackingTransparency.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D8CE6DCA395A046F42D7D8A4 /* AppTrackingTransparency.framework */; };
+		AD7E6FD0E278E821DA417A46 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 126DD3640EC95EE5EBA7FDA4 /* UIKit.framework */; };
+		B164B98F7223241C9220A8CA /* TikTokConsentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 45E3448DB2D014FE4C688C41 /* TikTokConsentTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -591,12 +604,26 @@
 			remoteGlobalIDString = 8BB88F1A250A96CA00EC9D74;
 			remoteInfo = TikTokBusinessSDKTestApp;
 		};
+		2EAA14DE94CFECF51718FF39 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8B23DF812502BA73008351FA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8B23DF892502BA73008351FA;
+			remoteInfo = TikTokBusinessSDK;
+		};
 		8BB88F31250A96D400EC9D74 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8B23DF812502BA73008351FA /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 8B23DF892502BA73008351FA;
 			remoteInfo = TikTokBusinessSDK;
+		};
+		EAA98A3502A6CE47CC476B3D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8B23DF812502BA73008351FA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9CEF6F3E6F17763061AC386F;
+			remoteInfo = TikTokConsentTestHost;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -615,6 +642,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0076672BCE629965C345AE6F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		0A0DDBB6252F948600512D3B /* TikTokAppEventTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokAppEventTests.m; sourceTree = "<group>"; };
 		0A165D9D251E7877005889BD /* TikTokBusinessSDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TikTokBusinessSDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A165DA1251E7877005889BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -631,6 +659,8 @@
 		0ADCF5402538D16900D7B57C /* TikTokRequestHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokRequestHandler.m; sourceTree = "<group>"; };
 		0ADCF54F253A212A00D7B57C /* TikTokTypeUtility.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TikTokTypeUtility.h; sourceTree = "<group>"; };
 		0ADCF550253A212A00D7B57C /* TikTokTypeUtility.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokTypeUtility.m; sourceTree = "<group>"; };
+		126DD3640EC95EE5EBA7FDA4 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		1E936ABA7CB2A6BA5C99A3F9 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WebKit.framework; sourceTree = DEVELOPER_DIR; };
 		2B1138532B9EEDC200215812 /* InitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitViewController.swift; sourceTree = "<group>"; };
 		2B1138552B9EF2A900215812 /* IdentifyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentifyViewController.swift; sourceTree = "<group>"; };
 		2B13EF842FEA9E54005D45D1 /* TikTokBusinessSDKDynamic.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TikTokBusinessSDKDynamic.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -873,6 +903,9 @@
 		2BE60B9F2B1F2A2100AB386C /* TikTokConstants.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokConstants.m; sourceTree = "<group>"; };
 		2BEC2CDC2E20E7130086C546 /* TikTokDebugInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TikTokDebugInfo.h; sourceTree = "<group>"; };
 		2BEC2CDD2E20E7130086C546 /* TikTokDebugInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokDebugInfo.m; sourceTree = "<group>"; };
+		3AD0C041B2ED08528C217EBE /* TikTokConsentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TikTokConsentTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		45E3448DB2D014FE4C688C41 /* TikTokConsentTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = TikTokConsentTests.m; sourceTree = "<group>"; };
+		78F55D4CAE48A8B488888436 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/CoreTelephony.framework; sourceTree = DEVELOPER_DIR; };
 		8B1811D9251EABF800CBBE2E /* TikTokPaymentObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TikTokPaymentObserver.h; sourceTree = "<group>"; };
 		8B1811DA251EABF800CBBE2E /* TikTokPaymentObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TikTokPaymentObserver.m; sourceTree = "<group>"; };
 		8B23DF8A2502BA73008351FA /* TikTokBusinessSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TikTokBusinessSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -909,6 +942,13 @@
 		8BB88F34250A986600EC9D74 /* FormViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormViewController.swift; sourceTree = "<group>"; };
 		8BB88F36250A9A4100EC9D74 /* EventViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventViewController.swift; sourceTree = "<group>"; };
 		8BEA4660252E96F800E12E0E /* PurchaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseViewController.swift; sourceTree = "<group>"; };
+		90C9F9CA76017CD8FEDEC249 /* main.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		BEAA9258C0F1001F2E1EA69F /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		C23E82F073F64B0D33004BBA /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/AdSupport.framework; sourceTree = DEVELOPER_DIR; };
+		C99C1E362F396018BA1B6C44 /* TikTokConsentSwiftTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TikTokConsentSwiftTests.swift; sourceTree = "<group>"; };
+		CE639531012B6F8563C6B8D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/StoreKit.framework; sourceTree = DEVELOPER_DIR; };
+		D8CE6DCA395A046F42D7D8A4 /* AppTrackingTransparency.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppTrackingTransparency.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/AppTrackingTransparency.framework; sourceTree = DEVELOPER_DIR; };
+		DBEEDACE12111FCFD3D29AA3 /* TikTokConsentTestHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TikTokConsentTestHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -941,6 +981,30 @@
 				8B903E202553B45000D039A5 /* TikTokBusinessSDK.framework in Frameworks */,
 				8B903E182553826800D039A5 /* AppTrackingTransparency.framework in Frameworks */,
 				8B6A216D251D7D630041E73B /* AdSupport.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ECCFD20C74293FB074A76BE2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5FFF2FCF3C37F6B66C3999A9 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3EDA9B072A0293BABE9B22A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2CFD87B58DE166911D695420 /* Foundation.framework in Frameworks */,
+				2A824A4F68C0A0F2ADB60EA2 /* TikTokBusinessSDK.framework in Frameworks */,
+				AD7E6FD0E278E821DA417A46 /* UIKit.framework in Frameworks */,
+				19B35A0F3C7027F9BE15356D /* WebKit.framework in Frameworks */,
+				3C5AD509B09929155C4FF353 /* CoreTelephony.framework in Frameworks */,
+				71F62E7ADA348655A0A9DED8 /* AdSupport.framework in Frameworks */,
+				A67BFF4C62464F963829B330 /* AppTrackingTransparency.framework in Frameworks */,
+				0C832C423E7799CB5BA0D312 /* StoreKit.framework in Frameworks */,
+				68A059F5892483C0A17F4D31 /* AVFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1461,6 +1525,7 @@
 				0A165D9E251E7877005889BD /* TikTokBusinessSDKTests */,
 				8B23DFAD2502BA9F008351FA /* Frameworks */,
 				8B23DF8B2502BA73008351FA /* Products */,
+				9E1300E8445C124546677A7B /* Consent Tests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -1471,6 +1536,8 @@
 				8BB88F1B250A96CA00EC9D74 /* TikTokBusinessSDKTestApp.app */,
 				0A165D9D251E7877005889BD /* TikTokBusinessSDKTests.xctest */,
 				2B13EF842FEA9E54005D45D1 /* TikTokBusinessSDKDynamic.framework */,
+				DBEEDACE12111FCFD3D29AA3 /* TikTokConsentTestHost.app */,
+				3AD0C041B2ED08528C217EBE /* TikTokConsentTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1491,6 +1558,7 @@
 				2B1812F42BCE96A10003FFDA /* StoreKit.framework */,
 				8B6A216C251D7D630041E73B /* AdSupport.framework */,
 				8B6A216A251D7D500041E73B /* AppTrackingTransparency.framework */,
+				FC03C6997D2C514AB53951FA /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1541,6 +1609,32 @@
 				8BB88F2B250A96CB00EC9D74 /* Info.plist */,
 			);
 			path = TikTokBusinessSDKTestApp;
+			sourceTree = "<group>";
+		};
+		9E1300E8445C124546677A7B /* Consent Tests */ = {
+			isa = PBXGroup;
+			children = (
+				90C9F9CA76017CD8FEDEC249 /* main.m */,
+				45E3448DB2D014FE4C688C41 /* TikTokConsentTests.m */,
+				C99C1E362F396018BA1B6C44 /* TikTokConsentSwiftTests.swift */,
+			);
+			name = "Consent Tests";
+			path = TikTokBusinessSDKTests/Consent;
+			sourceTree = "<group>";
+		};
+		FC03C6997D2C514AB53951FA /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				0076672BCE629965C345AE6F /* Foundation.framework */,
+				126DD3640EC95EE5EBA7FDA4 /* UIKit.framework */,
+				1E936ABA7CB2A6BA5C99A3F9 /* WebKit.framework */,
+				78F55D4CAE48A8B488888436 /* CoreTelephony.framework */,
+				C23E82F073F64B0D33004BBA /* AdSupport.framework */,
+				D8CE6DCA395A046F42D7D8A4 /* AppTrackingTransparency.framework */,
+				CE639531012B6F8563C6B8D8 /* StoreKit.framework */,
+				BEAA9258C0F1001F2E1EA69F /* AVFoundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1905,6 +1999,42 @@
 			productReference = 8BB88F1B250A96CA00EC9D74 /* TikTokBusinessSDKTestApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		9CEF6F3E6F17763061AC386F /* TikTokConsentTestHost */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8DC901248F860C11410601E8 /* Build configuration list for PBXNativeTarget "TikTokConsentTestHost" */;
+			buildPhases = (
+				CE46E4B8034C7C8764024D1D /* Sources */,
+				ECCFD20C74293FB074A76BE2 /* Frameworks */,
+				FC6F7FE54898910C4484F6FF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TikTokConsentTestHost;
+			productName = TikTokConsentTestHost;
+			productReference = DBEEDACE12111FCFD3D29AA3 /* TikTokConsentTestHost.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C5B12E478F56FBFF7E6D8361 /* TikTokConsentTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D26DC478F6E80F51DB34C091 /* Build configuration list for PBXNativeTarget "TikTokConsentTests" */;
+			buildPhases = (
+				092AB2019102F634039C5A49 /* Sources */,
+				F3EDA9B072A0293BABE9B22A /* Frameworks */,
+				37C27E662CD7C75DD27CBF32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				72CBC20C4F260A6D1E3A4563 /* PBXTargetDependency */,
+				5F2302974037E7676B07E0BB /* PBXTargetDependency */,
+			);
+			name = TikTokConsentTests;
+			productName = TikTokConsentTests;
+			productReference = 3AD0C041B2ED08528C217EBE /* TikTokConsentTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1930,6 +2060,9 @@
 					8BB88F1A250A96CA00EC9D74 = {
 						CreatedOnToolsVersion = 11.6;
 					};
+					C5B12E478F56FBFF7E6D8361 = {
+						TestTargetID = 9CEF6F3E6F17763061AC386F;
+					};
 				};
 			};
 			buildConfigurationList = 8B23DF842502BA73008351FA /* Build configuration list for PBXProject "TikTokBusinessSDK" */;
@@ -1950,6 +2083,8 @@
 				0A165D9C251E7877005889BD /* TikTokBusinessSDKTests */,
 				2B6C2D452BAC610600D6D9E8 /* TikTokBusinessSDKBuild */,
 				2B13EE732FEA9E54005D45D1 /* TikTokBusinessSDKDynamic */,
+				9CEF6F3E6F17763061AC386F /* TikTokConsentTestHost */,
+				C5B12E478F56FBFF7E6D8361 /* TikTokConsentTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1971,6 +2106,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		37C27E662CD7C75DD27CBF32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8B23DF882502BA73008351FA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1987,6 +2129,13 @@
 				8BB88F2A250A96CB00EC9D74 /* LaunchScreen.storyboard in Resources */,
 				2B9F328A2AB32531009A692D /* StoreKitConfig.storekit in Resources */,
 				8BB88F27250A96CB00EC9D74 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FC6F7FE54898910C4484F6FF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2013,6 +2162,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		092AB2019102F634039C5A49 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B164B98F7223241C9220A8CA /* TikTokConsentTests.m in Sources */,
+				44E9092C2EFBCB8B5C0C5349 /* TikTokConsentSwiftTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0A165D99251E7877005889BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2314,6 +2472,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CE46E4B8034C7C8764024D1D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3058C8CF1835957A86B61DC3 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -2326,6 +2492,18 @@
 			isa = PBXTargetDependency;
 			target = 8BB88F1A250A96CA00EC9D74 /* TikTokBusinessSDKTestApp */;
 			targetProxy = 2BD8E5032FD6DC77006FD4BB /* PBXContainerItemProxy */;
+		};
+		5F2302974037E7676B07E0BB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = TikTokConsentTestHost;
+			target = 9CEF6F3E6F17763061AC386F /* TikTokConsentTestHost */;
+			targetProxy = EAA98A3502A6CE47CC476B3D /* PBXContainerItemProxy */;
+		};
+		72CBC20C4F260A6D1E3A4563 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = TikTokBusinessSDK;
+			target = 8B23DF892502BA73008351FA /* TikTokBusinessSDK */;
+			targetProxy = 2EAA14DE94CFECF51718FF39 /* PBXContainerItemProxy */;
 		};
 		8BB88F32250A96D400EC9D74 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2535,6 +2713,72 @@
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
+		};
+		39728ADA96878C749E2EF838 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_OBJC_ARC = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/TikTokBusinessSDK/Core/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lz",
+					"-lsqlite3",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.endearing.TikTokConsentTestHost;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6B5123A30F424ED1C2AAA3CE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_OBJC_ARC = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/TikTokBusinessSDK/Core/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lz",
+					"-lsqlite3",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.endearing.TikTokConsentTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TikTokConsentTestHost.app/TikTokConsentTestHost";
+			};
+			name = Debug;
 		};
 		8B23DF902502BA73008351FA /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -2793,6 +3037,74 @@
 			};
 			name = Release;
 		};
+		D80D374D466964827505946E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_OBJC_ARC = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/TikTokBusinessSDK/Core/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lz",
+					"-lsqlite3",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.endearing.TikTokConsentTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TikTokConsentTestHost.app/TikTokConsentTestHost";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		DD7A11E8C0C34FD1C1E5C4A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGNING_ALLOWED = NO;
+				GCC_ENABLE_OBJC_ARC = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/TikTokBusinessSDK/Core/**",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lz",
+					"-lsqlite3",
+					"-lc++",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.endearing.TikTokConsentTestHost;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2846,6 +3158,24 @@
 			buildConfigurations = (
 				8BB88F2D250A96CB00EC9D74 /* Debug */,
 				8BB88F2E250A96CB00EC9D74 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8DC901248F860C11410601E8 /* Build configuration list for PBXNativeTarget "TikTokConsentTestHost" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DD7A11E8C0C34FD1C1E5C4A6 /* Release */,
+				39728ADA96878C749E2EF838 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D26DC478F6E80F51DB34C091 /* Build configuration list for PBXNativeTarget "TikTokConsentTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D80D374D466964827505946E /* Release */,
+				6B5123A30F424ED1C2AAA3CE /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

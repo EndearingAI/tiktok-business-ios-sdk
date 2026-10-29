@@ -11,8 +11,10 @@ import StoreKit
 extension TTStoreKitObserver: SKPaymentTransactionObserver {
     
     func startObserveStoreKit1() {
-        debugMessage("start SK1 observe.")
-        SKPaymentQueue.default().add(self)
+        consent.perform {
+            debugMessage("start SK1 observe.")
+            SKPaymentQueue.default().add(self)
+        }
     }
     
     func stopObserveStoreKit1() {
@@ -21,11 +23,15 @@ extension TTStoreKitObserver: SKPaymentTransactionObserver {
     }
     
     nonisolated public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        let consent = TTTrackingConsent()
+        guard consent.isCurrent else { return }
         Task.detached {
             for transaction in transactions {
+                guard consent.isCurrent, !Task.isCancelled else { return }
                 await self.debugMessage("SK1 paymentQueue received transaction. product id: \(transaction.payment.productIdentifier)")
                 let extraParams = await self.extraParams
-                let router = TTIAPTransactionEventRouter(extraParams: extraParams)
+                guard consent.isCurrent else { return }
+                let router = TTIAPTransactionEventRouter(extraParams: extraParams, consent: consent)
                 await router.routeSK1(transaction)
             }
         }

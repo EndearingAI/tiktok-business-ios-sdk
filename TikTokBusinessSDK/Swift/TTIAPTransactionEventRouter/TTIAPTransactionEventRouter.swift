@@ -9,11 +9,13 @@ import StoreKit
 
 @available(iOS 15.0, *)
 final class TTIAPTransactionEventRouter {    
+    let consent: TTTrackingConsent
     let extraParams: [String: Any]
     
     let logger = TikTokLogger()
     
-    init(extraParams: [String : Any]) {
+    init(extraParams: [String : Any], consent: TTTrackingConsent = TTTrackingConsent()) {
+        self.consent = consent
         self.extraParams = extraParams
         logger.setLogLevel(TikTokLogLevelDebug)
     }

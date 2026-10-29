@@ -7,7 +7,7 @@
 
 #import "TikTokAppEvent.h"
 #import "TikTokAppEventUtility.h"
-#import "TikTokBusiness.h"
+#import "TikTokBusiness+private.h"
 #import "TikTokIdentifyUtility.h"
 #import "TikTokBusinessSDKMacros.h"
 #import "TikTokTypeUtility.h"
@@ -62,43 +62,48 @@
                withType: (NSString *)type
             withEventId:(nonnull NSString *)eventID
 {
-    self = [super init];
-    if (self == nil) {
-        return nil;
-    }
-    
-    self.eventName = eventName;
-    self.timestamp = [TikTokAppEventUtility getCurrentTimestampInISO8601];
-    NSMutableDictionary *realProperties = [NSMutableDictionary dictionary];
-    NSMutableDictionary *tmpProperty = properties.mutableCopy;
-    if (TTCheckValidDictionary(tmpProperty)) {
-        NSString *apiPlatformStr = [tmpProperty objectForKey:@"api_platform"];
-        if (TTCheckValidString(apiPlatformStr)) {
-            [realProperties setObject:apiPlatformStr forKey:@"api_platform"];
-            [tmpProperty removeObjectForKey:@"api_platform"];
+    @synchronized (TikTokBusiness.class) {
+
+        self = [super init];
+        if (self == nil) {
+            return nil;
         }
-        NSString *monitorType = [tmpProperty objectForKey:@"monitor_type"];
-        if (TTCheckValidString(monitorType) && [monitorType isEqualToString:@"enhanced_data_postback"]) {
-            [realProperties setObject:tmpProperty forKey:@"meta"];
-            [realProperties setObject:@"edp" forKey:@"track_source"];
-            self.isEDPEvent = YES;
-        } else {
-            [realProperties addEntriesFromDictionary:tmpProperty];
-            self.isEDPEvent = NO;
+
+        self.consentGeneration = [TikTokBusiness trackingConsentGeneration];
+        if (!self.consentGeneration) return self;
+        self.eventName = eventName;
+        self.timestamp = [TikTokAppEventUtility getCurrentTimestampInISO8601];
+        NSMutableDictionary *realProperties = [NSMutableDictionary dictionary];
+        NSMutableDictionary *tmpProperty = properties.mutableCopy;
+        if (TTCheckValidDictionary(tmpProperty)) {
+            NSString *apiPlatformStr = [tmpProperty objectForKey:@"api_platform"];
+            if (TTCheckValidString(apiPlatformStr)) {
+                [realProperties setObject:apiPlatformStr forKey:@"api_platform"];
+                [tmpProperty removeObjectForKey:@"api_platform"];
+            }
+            NSString *monitorType = [tmpProperty objectForKey:@"monitor_type"];
+            if (TTCheckValidString(monitorType) && [monitorType isEqualToString:@"enhanced_data_postback"]) {
+                [realProperties setObject:tmpProperty forKey:@"meta"];
+                [realProperties setObject:@"edp" forKey:@"track_source"];
+                self.isEDPEvent = YES;
+            } else {
+                [realProperties addEntriesFromDictionary:tmpProperty];
+                self.isEDPEvent = NO;
+            }
         }
+        [realProperties setValue:TTSafeString(eventID) forKey:@"tt_event_id"];
+        self.properties = realProperties.copy;
+        self.anonymousID = [[TikTokIdentifyUtility sharedInstance] getOrGenerateAnonymousID];
+        self.userInfo = [[TikTokIdentifyUtility sharedInstance] getUserInfoDictionary];
+        self.type = type;
+        self.tteventID = TTSafeString(eventID);
+        self.dbID = @"";
+        self.retryTimes = 0;
+        self.eventID = [[NSUUID UUID] UUIDString];
+        self.screenshot = nil;
+
+        return self;
     }
-    [realProperties setValue:TTSafeString(eventID) forKey:@"tt_event_id"];
-    self.properties = realProperties.copy;
-    self.anonymousID = [[TikTokIdentifyUtility sharedInstance] getOrGenerateAnonymousID];
-    self.userInfo = [[TikTokIdentifyUtility sharedInstance] getUserInfoDictionary];
-    self.type = type;
-    self.tteventID = TTSafeString(eventID);
-    self.dbID = @"";
-    self.retryTimes = 0;
-    self.eventID = [[NSUUID UUID] UUIDString];
-    self.screenshot = nil;
-   
-    return self;
 }
 
 - (id)copyWithZone:(NSZone *)zone
@@ -106,6 +111,7 @@
     TikTokAppEvent *copy = [[[self class] allocWithZone:zone] init];
     
     if (copy) {
+        copy.consentGeneration = self.consentGeneration;
         copy.eventName = [self.eventName copyWithZone:zone];
         copy.timestamp = [self.timestamp copyWithZone:zone];
         copy.properties = [self.properties copyWithZone:zone];
@@ -146,6 +152,8 @@
 - (nullable instancetype)initWithCoder:(nonnull NSCoder *)decoder
 {
     if(self = [super init]) {
+        self.consentGeneration = [TikTokBusiness trackingConsentGeneration];
+        if (!self.consentGeneration) return self;
         self.eventName = [decoder decodeObjectOfClass:[NSString class] forKey:TIKTOKSDK_EVENTNAME_KEY];
         self.timestamp = [decoder decodeObjectOfClass:[NSString class] forKey:TIKTOKSDK_TIMESTAMP_KEY];
         NSSet *clsSet = [NSSet setWithObjects:[NSDictionary class], [NSString class],[NSArray class],[NSNumber class], nil];

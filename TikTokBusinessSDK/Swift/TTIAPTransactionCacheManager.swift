@@ -6,100 +6,98 @@
 //  Copyright © 2026 TikTok. All rights reserved.
     
 import Foundation
+#if TikTokBusinessSDK_SPM
+import TikTokBusinessSDKCore
+#endif
 
-fileprivate let TTIAP_TRANSACTION_CACHE_KEY: String = "TTIAP_TRANSACTION_CACHE_KEY"
-
-fileprivate let TTIAP_TRANSACTION_CHECK_DATE_KEY: String = "TTIAP_TRANSACTION_CHECK_DATE_KEY"
+private let transactionCacheKey = "TTIAP_TRANSACTION_CACHE_KEY"
+private let transactionCheckDateKey = "TTIAP_TRANSACTION_CHECK_DATE_KEY"
 
 @available(iOS 15.0, *)
-final actor TTIAPTransactionCacheManager {
-    
-    fileprivate struct CacheModel: Codable, Hashable, Equatable {
+// Every mutable field is protected by the same Objective-C monitor as native consent.
+// Synchronous notification cleanup is required before setTrackingEnabled(false) returns.
+final class TTIAPTransactionCacheManager: @unchecked Sendable {
+    private struct CacheModel: Codable, Hashable {
         let transactionId: String
         let productId: String
         let eventName: String
         let date: Date
         
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.transactionId == rhs.transactionId && lhs.productId == rhs.productId && lhs.eventName == rhs.eventName
+        }
         func hash(into hasher: inout Hasher) {
             hasher.combine(transactionId)
             hasher.combine(productId)
             hasher.combine(eventName)
         }
-        
-        static func == (lhs: Self, rhs: Self) -> Bool {
-            return lhs.transactionId == rhs.transactionId
-            && lhs.productId == rhs.productId && lhs.eventName == rhs.eventName
-        }
     }
-    
-    static let shared = TTIAPTransactionCacheManager()
-    
-    private(set) var lastCheckedDate: Date {
-        didSet {
-            UserDefaults.tiktokBusiness.set(lastCheckedDate, forKey: TTIAP_TRANSACTION_CHECK_DATE_KEY)
-        }
-    }
-    
-    private var cachedTransactions: Set<CacheModel>
-    
-    init() {
-        let data = UserDefaults.tiktokBusiness.data(forKey: TTIAP_TRANSACTION_CACHE_KEY)
-        if let data, let caches = try? JSONDecoder().decode(Set<CacheModel>.self, from: data) {
-            cachedTransactions = caches
-        } else {
-            cachedTransactions = []
-        }
-        lastCheckedDate = UserDefaults.tiktokBusiness.value(forKey: TTIAP_TRANSACTION_CHECK_DATE_KEY) as? Date ?? Date()
-    }
-    
-    private func save() {
-        clearExpiredCache()
-        guard
-            cachedTransactions.isEmpty == false,
-            let data = try? JSONEncoder().encode(cachedTransactions)
-        else {
-            return
-        }
-        UserDefaults.tiktokBusiness.set(data, forKey: TTIAP_TRANSACTION_CACHE_KEY)
-    }
-    
-    private func clearExpiredCache() {
-        guard cachedTransactions.isEmpty == false else {
-            return
-        }
-        let earlierDate = Date.init(timeInterval: -60 * 60 * 24 * 30, since: Date())    // 清除 30 天前的数据
-        cachedTransactions = cachedTransactions.filter({ cache in
-            return cache.date >= earlierDate
-        })
-    }
-}
 
-// MARK: Internal
-@available(iOS 15.0, *)
-extension TTIAPTransactionCacheManager {
-    
-    func updateCheckedDate(_ date: Date) {
-        lastCheckedDate = date
+    static let shared = TTIAPTransactionCacheManager()
+    private var checkedDate = Date()
+    private var identity: String?
+    private var cachedTransactions: Set<CacheModel> = []
+    private var observer: NSObjectProtocol?
+
+    init() {
+        observer = NotificationCenter.default.addObserver(forName: .tikTokTrackingConsentRevoked, object: nil, queue: nil) { [weak self] _ in
+            self?.reset()
+        }
+    }
+    deinit {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+    }
+
+    var lastCheckedDate: Date {
+        let consent = TTTrackingConsent()
+        return consent.perform {
+            prepare(consent)
+            return checkedDate
+        } ?? Date()
+    }
+
+    private func prepare(_ consent: TTTrackingConsent) {
+        if identity != consent.identifier {
+            reset()
+            identity = consent.identifier
+        }
     }
     
-    func cache(transactionId: String, productId: String, eventName: String) {
-        guard transactionId.isEmpty == false, productId.isEmpty == false else {
-            return
-        }
-        
-        cachedTransactions.insert(.init(transactionId: transactionId, productId: productId, eventName: eventName, date: Date()))
-        
-        save()
+    func reset() {
+        objc_sync_enter(TikTokBusiness.self)
+        defer { objc_sync_exit(TikTokBusiness.self) }
+        identity = nil
+        cachedTransactions.removeAll()
+        checkedDate = Date()
+        UserDefaults.tiktokBusiness.removeObject(forKey: transactionCacheKey)
+        UserDefaults.tiktokBusiness.removeObject(forKey: transactionCheckDateKey)
     }
     
-    func cacheContains(transactionId: String, productId: String, eventName: String) -> Bool {
-        guard transactionId.isEmpty == false, productId.isEmpty == false else {
-            return false
+    func updateCheckedDate(_ date: Date, consent: TTTrackingConsent = TTTrackingConsent()) {
+        consent.perform {
+            prepare(consent)
+            checkedDate = date
+            UserDefaults.tiktokBusiness.set(date, forKey: transactionCheckDateKey)
         }
-        
-        if cachedTransactions.contains(.init(transactionId: transactionId, productId: productId, eventName: eventName, date: Date())) {
-            return true
+    }
+    
+    func cache(transactionId: String, productId: String, eventName: String, consent: TTTrackingConsent = TTTrackingConsent()) {
+        consent.perform {
+            guard !transactionId.isEmpty, !productId.isEmpty else { return }
+            prepare(consent)
+            let expiry = Date(timeIntervalSinceNow: -60 * 60 * 24 * 30)
+            cachedTransactions = cachedTransactions.filter { $0.date >= expiry }
+            cachedTransactions.insert(CacheModel(transactionId: transactionId, productId: productId, eventName: eventName, date: Date()))
+            if let data = try? JSONEncoder().encode(cachedTransactions) {
+                UserDefaults.tiktokBusiness.set(data, forKey: transactionCacheKey)
+            }
         }
-        return false
+    }
+
+    func cacheContains(transactionId: String, productId: String, eventName: String, consent: TTTrackingConsent = TTTrackingConsent()) -> Bool {
+        consent.perform {
+            prepare(consent)
+            return cachedTransactions.contains(CacheModel(transactionId: transactionId, productId: productId, eventName: eventName, date: Date()))
+        } ?? false
     }
 }

@@ -25,6 +25,11 @@ NS_ASSUME_NONNULL_BEGIN
 */
 + (TikTokEventLogger *)getEventLogger;
 
+/// Zero denotes denied consent. Tokens are never persisted or reused after withdrawal.
++ (NSUInteger)trackingConsentGeneration;
++ (BOOL)performWithTrackingConsent:(NSUInteger)generation block:(void (NS_NOESCAPE ^)(void))block;
+- (void)stopTrackingAndPurge;
+
 @end
 
 NS_ASSUME_NONNULL_END

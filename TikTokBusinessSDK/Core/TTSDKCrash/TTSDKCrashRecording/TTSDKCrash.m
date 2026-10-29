@@ -25,6 +25,7 @@
 //
 
 #import "TTSDKCrash.h"
+#import "TikTokBusiness+private.h"
 #import "TTSDKCrash+Private.h"
 
 #import "TTSDKCrashC.h"
@@ -91,17 +92,7 @@ NSString *ttsdkcrash_getDefaultInstallPath(void)
 #pragma mark - Lifecycle -
 // ============================================================================
 
-+ (void)load
-{
-    [[self class] classDidBecomeLoaded];
-}
-
-+ (void)initialize
-{
-    if (self == [TTSDKCrash class]) {
-        [[self class] subscribeToNotifications];
-    }
-}
+// Crash lifecycle is intentionally inert in this consent-controlled distribution.
 
 + (instancetype)sharedInstance
 {
@@ -129,38 +120,44 @@ NSString *ttsdkcrash_getDefaultInstallPath(void)
 
 - (NSDictionary *)userInfo
 {
-    const char *userInfoJSON = ttsdkcrash_getUserInfoJSON();
-    if (userInfoJSON != NULL && strlen(userInfoJSON) > 0) {
-        NSError *error = nil;
-        NSData *jsonData = [NSData dataWithBytes:userInfoJSON length:strlen(userInfoJSON)];
-        NSDictionary *userInfoDict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
-        free((void *)userInfoJSON);  // Free the allocated memory
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return nil;
+        const char *userInfoJSON = ttsdkcrash_getUserInfoJSON();
+        if (userInfoJSON != NULL && strlen(userInfoJSON) > 0) {
+            NSError *error = nil;
+            NSData *jsonData = [NSData dataWithBytes:userInfoJSON length:strlen(userInfoJSON)];
+            NSDictionary *userInfoDict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
+            free((void *)userInfoJSON);  // Free the allocated memory
 
-        if (error != nil) {
-            TTSDKLOG_ERROR(@"Error parsing JSON: %@", error.localizedDescription);
-            return nil;
+            if (error != nil) {
+                TTSDKLOG_ERROR(@"Error parsing JSON: %@", error.localizedDescription);
+                return nil;
+            }
+            return userInfoDict;
         }
-        return userInfoDict;
+        return nil;
     }
-    return nil;
 }
 
 - (void)setUserInfo:(NSDictionary *)userInfo
 {
-    NSError *error = nil;
-    NSData *userInfoJSON = nil;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        NSError *error = nil;
+        NSData *userInfoJSON = nil;
 
-    if (userInfo != nil) {
-        userInfoJSON = [NSJSONSerialization dataWithJSONObject:userInfo options:NSJSONWritingSortedKeys error:&error];
+        if (userInfo != nil) {
+            userInfoJSON = [NSJSONSerialization dataWithJSONObject:userInfo options:NSJSONWritingSortedKeys error:&error];
 
-        if (error != nil) {
-            TTSDKLOG_ERROR(@"Could not serialize user info: %@", error.localizedDescription);
-            return;
+            if (error != nil) {
+                TTSDKLOG_ERROR(@"Could not serialize user info: %@", error.localizedDescription);
+                return;
+            }
         }
-    }
 
-    const char *userInfoCString = userInfoJSON ? [userInfoJSON bytes] : NULL;
-    ttsdkcrash_setUserInfoJSON(userInfoCString);
+        const char *userInfoCString = userInfoJSON ? [userInfoJSON bytes] : NULL;
+        ttsdkcrash_setUserInfoJSON(userInfoCString);
+    }
 }
 
 - (BOOL)reportsMemoryTerminations
@@ -175,79 +172,58 @@ NSString *ttsdkcrash_getDefaultInstallPath(void)
 
 - (NSDictionary *)systemInfo
 {
-    TTSDKCrash_MonitorContext fakeEvent = { 0 };
-    ttsdkcm_system_getAPI()->addContextualInfoToEvent(&fakeEvent);
-    NSMutableDictionary *dict = [NSMutableDictionary new];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return @{};
+        TTSDKCrash_MonitorContext fakeEvent = { 0 };
+        ttsdkcm_system_getAPI()->addContextualInfoToEvent(&fakeEvent);
+        NSMutableDictionary *dict = [NSMutableDictionary new];
 
-#define COPY_STRING(A) \
-    if (fakeEvent.System.A) dict[@ #A] = [NSString stringWithUTF8String:fakeEvent.System.A]
-#define COPY_PRIMITIVE(A) dict[@ #A] = @(fakeEvent.System.A)
-    COPY_STRING(systemName);
-    COPY_STRING(systemVersion);
-    COPY_STRING(machine);
-    COPY_STRING(model);
-    COPY_STRING(kernelVersion);
-    COPY_STRING(osVersion);
-    COPY_PRIMITIVE(isJailbroken);
-    COPY_STRING(bootTime);  // this field is populated in an optional monitor
-    COPY_STRING(appStartTime);
-    COPY_STRING(executablePath);
-    COPY_STRING(executableName);
-    COPY_STRING(bundleID);
-    COPY_STRING(bundleName);
-    COPY_STRING(bundleVersion);
-    COPY_STRING(bundleShortVersion);
-    COPY_STRING(appID);
-    COPY_STRING(cpuArchitecture);
-    COPY_PRIMITIVE(cpuType);
-    COPY_PRIMITIVE(cpuSubType);
-    COPY_PRIMITIVE(binaryCPUType);
-    COPY_PRIMITIVE(binaryCPUSubType);
-    COPY_STRING(timezone);
-    COPY_STRING(processName);
-    COPY_PRIMITIVE(processID);
-    COPY_PRIMITIVE(parentProcessID);
-    COPY_STRING(deviceAppHash);
-    COPY_STRING(buildType);
-    COPY_PRIMITIVE(storageSize);  // this field is populated in an optional monitor
-    COPY_PRIMITIVE(memorySize);
-    COPY_PRIMITIVE(freeMemory);
-    COPY_PRIMITIVE(usableMemory);
+    #define COPY_STRING(A) \
+        if (fakeEvent.System.A) dict[@ #A] = [NSString stringWithUTF8String:fakeEvent.System.A]
+    #define COPY_PRIMITIVE(A) dict[@ #A] = @(fakeEvent.System.A)
+        COPY_STRING(systemName);
+        COPY_STRING(systemVersion);
+        COPY_STRING(machine);
+        COPY_STRING(model);
+        COPY_STRING(kernelVersion);
+        COPY_STRING(osVersion);
+        COPY_PRIMITIVE(isJailbroken);
+        COPY_STRING(bootTime);  // this field is populated in an optional monitor
+        COPY_STRING(appStartTime);
+        COPY_STRING(executablePath);
+        COPY_STRING(executableName);
+        COPY_STRING(bundleID);
+        COPY_STRING(bundleName);
+        COPY_STRING(bundleVersion);
+        COPY_STRING(bundleShortVersion);
+        COPY_STRING(appID);
+        COPY_STRING(cpuArchitecture);
+        COPY_PRIMITIVE(cpuType);
+        COPY_PRIMITIVE(cpuSubType);
+        COPY_PRIMITIVE(binaryCPUType);
+        COPY_PRIMITIVE(binaryCPUSubType);
+        COPY_STRING(timezone);
+        COPY_STRING(processName);
+        COPY_PRIMITIVE(processID);
+        COPY_PRIMITIVE(parentProcessID);
+        COPY_STRING(deviceAppHash);
+        COPY_STRING(buildType);
+        COPY_PRIMITIVE(storageSize);  // this field is populated in an optional monitor
+        COPY_PRIMITIVE(memorySize);
+        COPY_PRIMITIVE(freeMemory);
+        COPY_PRIMITIVE(usableMemory);
 
-    return [dict copy];
+        return [dict copy];
+    }
 }
 
-- (BOOL)installWithConfiguration:(TTSDKCrashConfiguration *)configuration error:(NSError **)error
-{
-    self.configuration = [configuration copy] ?: [TTSDKCrashConfiguration new];
-    self.configuration.installPath = configuration.installPath ?: ttsdkcrash_getDefaultInstallPath();
-
-    if (self.configuration.reportStoreConfiguration.appName == nil) {
-        self.configuration.reportStoreConfiguration.appName = self.bundleName;
+- (BOOL)installWithConfiguration:(TTSDKCrashConfiguration *)configuration error:(NSError **)error {
+    if (error) {
+        *error = [NSError errorWithDomain:@"TikTokBusinessSDK.Consent" code:1 userInfo:@{
+            NSLocalizedDescriptionKey: @"TikTok crash capture is disabled: signal handlers cannot safely verify current ATT authorization. Use the app's crash reporter."
+        }];
     }
-    if (self.configuration.reportStoreConfiguration.reportsPath == nil) {
-        self.configuration.reportStoreConfiguration.reportsPath = [self.configuration.installPath
-            stringByAppendingPathComponent:[TTSDKCrashReportStore defaultInstallSubfolder]];
-    }
-    TTSDKCrashReportStore *reportStore =
-        [TTSDKCrashReportStore storeWithConfiguration:self.configuration.reportStoreConfiguration error:error];
-    if (reportStore == nil) {
-        return NO;
-    }
-
-    TTSDKCrashCConfiguration config = [self.configuration toCConfiguration];
-    TTSDKCrashInstallErrorCode result =
-        ttsdkcrash_install(self.bundleName.UTF8String, self.configuration.installPath.UTF8String, &config);
-    TTSDKCrashCConfiguration_Release(&config);
-    if (result != TTSDKCrashInstallErrorNone) {
-        if (error != NULL) {
-            *error = [TTSDKCrash errorForInstallErrorCode:result];
-        }
-        return NO;
-    }
-
-    _reportStore = reportStore;
-    return YES;
+    return NO;
 }
 
 - (void)reportUserException:(NSString *)name
@@ -258,54 +234,7 @@ NSString *ttsdkcrash_getDefaultInstallPath(void)
               logAllThreads:(BOOL)logAllThreads
            terminateProgram:(BOOL)terminateProgram
 {
-    const char *cName = [name cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *cReason = [reason cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *cLanguage = [language cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *cLineOfCode = [lineOfCode cStringUsingEncoding:NSUTF8StringEncoding];
-    const char *cStackTrace = NULL;
-
-    if (stackTrace != nil) {
-        NSError *error = nil;
-        NSData *jsonData = [TTSDKJSONCodec encode:stackTrace options:0 error:&error];
-        if (jsonData == nil || error != nil) {
-            TTSDKLOG_ERROR(@"Error encoding stack trace to JSON: %@", error);
-            // Don't return, since we can still record other useful information.
-        }
-        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
-        cStackTrace = [jsonString cStringUsingEncoding:NSUTF8StringEncoding];
-    }
-
-    ttsdkcrash_reportUserException(cName, cReason, cLanguage, cLineOfCode, cStackTrace, logAllThreads, terminateProgram);
-}
-
-// ============================================================================
-#pragma mark - Advanced API -
-// ============================================================================
-
-#define SYNTHESIZE_CRASH_STATE_PROPERTY(TYPE, NAME) \
-    -(TYPE)NAME { return ttsdkcrashstate_currentState()->NAME; }
-
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSTimeInterval, activeDurationSinceLastCrash)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSTimeInterval, backgroundDurationSinceLastCrash)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSInteger, launchesSinceLastCrash)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSInteger, sessionsSinceLastCrash)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSTimeInterval, activeDurationSinceLaunch)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSTimeInterval, backgroundDurationSinceLaunch)
-SYNTHESIZE_CRASH_STATE_PROPERTY(NSInteger, sessionsSinceLaunch)
-SYNTHESIZE_CRASH_STATE_PROPERTY(BOOL, crashedLastLaunch)
-
-// ============================================================================
-#pragma mark - Utility -
-// ============================================================================
-
-- (NSMutableData *)nullTerminated:(NSData *)data
-{
-    if (data == nil) {
-        return NULL;
-    }
-    NSMutableData *mutable = [NSMutableData dataWithData:data];
-    [mutable appendBytes:"\0" length:1];
-    return mutable;
+    // Crash capture is disabled in this distribution.
 }
 
 + (NSError *)errorForInstallErrorCode:(TTSDKCrashInstallErrorCode)errorCode

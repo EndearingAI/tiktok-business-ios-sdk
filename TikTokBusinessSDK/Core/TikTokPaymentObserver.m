@@ -28,6 +28,8 @@ static NSMutableArray *g_pendingRequestors;
 
 - (instancetype) initWithTransaction: (SKPaymentTransaction *)transaction;
 - (void)resolveProducts;
+- (void)cancel;
+@property (nonatomic) NSUInteger consentGeneration;
 
 @end
 
@@ -50,7 +52,11 @@ static NSMutableArray *g_pendingRequestors;
 
 + (void)stopObservingTransactions
 {
-    [[self singleton] stopObservingTransactions];
+    @synchronized (TikTokBusiness.class) {
+        [[self singleton] stopObservingTransactions];
+        for (TikTokPaymentProductRequestor *requestor in g_pendingRequestors.copy) [requestor cancel];
+        [g_pendingRequestors removeAllObjects];
+    }
 }
 
 #pragma mark - Internal Methods
@@ -80,17 +86,21 @@ static NSMutableArray *g_pendingRequestors;
 
 -(void)startObservingTransactions
 {
-    @synchronized (self) {
-        if(!_observingTransactions) {
-            [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
-            _observingTransactions = YES;
-            [self.logger info:@"Starting Transaction Tracking..."];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        @synchronized (self) {
+            if(!_observingTransactions) {
+                [[SKPaymentQueue defaultQueue] addTransactionObserver:self];
+                _observingTransactions = YES;
+                [self.logger info:@"Starting Transaction Tracking..."];
+            }
         }
     }
 }
 
 -(void)stopObservingTransactions
 {
+    [self.processedPurchaseTransactionIDs removeAllObjects];
     @synchronized (self) {
         if(_observingTransactions) {
             [[SKPaymentQueue defaultQueue] removeTransactionObserver:self];
@@ -108,20 +118,23 @@ static NSMutableArray *g_pendingRequestors;
 
 -(void)handleTransaction: (SKPaymentTransaction *)transaction
 {
-    if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
-        NSString *transactionID = transaction.transactionIdentifier;
-        if (transactionID) {
-            @synchronized (self) {
-                if ([self.processedPurchaseTransactionIDs containsObject:transactionID]) {
-                    return;
-                } else {
-                    [self.processedPurchaseTransactionIDs addObject:transactionID];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return;
+        if (transaction.transactionState == SKPaymentTransactionStatePurchased) {
+            NSString *transactionID = transaction.transactionIdentifier;
+            if (transactionID) {
+                @synchronized (self) {
+                    if ([self.processedPurchaseTransactionIDs containsObject:transactionID]) {
+                        return;
+                    } else {
+                        [self.processedPurchaseTransactionIDs addObject:transactionID];
+                    }
                 }
             }
         }
+        TikTokPaymentProductRequestor *productRequest = [[TikTokPaymentProductRequestor alloc] initWithTransaction:transaction];
+        [productRequest resolveProducts];
     }
-    TikTokPaymentProductRequestor *productRequest = [[TikTokPaymentProductRequestor alloc] initWithTransaction:transaction];
-    [productRequest resolveProducts];
 }
 
 @end
@@ -147,6 +160,8 @@ static NSMutableArray *g_pendingRequestors;
 {
     self = [super init];
     if (self) {
+        self.consentGeneration = [TikTokBusiness trackingConsentGeneration];
+        if (!self.consentGeneration) return nil;
         _transaction = transaction;
         NSString *data = [[NSUserDefaults standardUserDefaults] stringForKey:@"com.tiktok.appevents.PaymentObserver.originalTransaction"];
         _eventsWithReceipt = [NSSet setWithArray:@[@"Purchase"]];
@@ -172,6 +187,7 @@ static NSMutableArray *g_pendingRequestors;
 
 - (void)resolveProducts
 {
+    if (!self.consentGeneration || self.consentGeneration != [TikTokBusiness trackingConsentGeneration]) return;
     NSString *productId = self.transaction.payment.productIdentifier;
     NSSet *productIdentifiers = [NSSet setWithObjects:productId, nil];
     self.productRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:productIdentifiers];
@@ -291,16 +307,19 @@ static NSMutableArray *g_pendingRequestors;
 
 - (void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
 {
-    NSArray *products = response.products;
-    NSArray *invalidProductIdentifiers = response.invalidProductIdentifiers;
-    if (products.count + invalidProductIdentifiers.count != 1) {
-        [[TikTokFactory getLogger] info:@"TikTokPaymentObserver: Expect to resolve one product per request"];
+    @synchronized (TikTokBusiness.class) {
+        if (!self.consentGeneration || self.consentGeneration != [TikTokBusiness trackingConsentGeneration]) return;
+        NSArray *products = response.products;
+        NSArray *invalidProductIdentifiers = response.invalidProductIdentifiers;
+        if (products.count + invalidProductIdentifiers.count != 1) {
+            [[TikTokFactory getLogger] info:@"TikTokPaymentObserver: Expect to resolve one product per request"];
+        }
+        SKProduct *product = nil;
+        if (products.count) {
+            product = [products objectAtIndex:0];
+        }
+        [self logTransactionEvent:product];
     }
-    SKProduct *product = nil;
-    if (products.count) {
-        product = [products objectAtIndex:0];
-    }
-    [self logTransactionEvent:product];
 }
 
 - (void)requestDidFinish:(SKRequest *)request
@@ -314,6 +333,14 @@ static NSMutableArray *g_pendingRequestors;
     [self cleanUp];
 }
 
+- (void)cancel {
+    self.productRequest.delegate = nil;
+    [self.productRequest cancel];
+    self.productRequest = nil;
+    self.transaction = nil;
+    [_originalTransactionSet removeAllObjects];
+}
+
 - (void)cleanUp
 {
     @synchronized (g_pendingRequestors) {
@@ -323,44 +350,50 @@ static NSMutableArray *g_pendingRequestors;
 
 - (void)trackAutomaticPurchaseEvent:(SKPaymentTransaction *)transaction ofProduct:(SKProduct *)product
 {
-    NSString *eventName = nil;
-    switch (transaction.transactionState) {
-        case SKPaymentTransactionStatePurchasing:
-            eventName = @"Purchasing";
-            break;
-        case SKPaymentTransactionStatePurchased:
-            eventName = @"Purchase";
-            break;
-        case SKPaymentTransactionStateFailed:
-            eventName = @"PurchaseFailed";
-            break;
-        case SKPaymentTransactionStateRestored:
-            eventName = @"PurchaseRestored";
-            break;
-        case SKPaymentTransactionStateDeferred:
-            eventName = @"PurchaseDeferred";
-            break;
-    }
-    
-    double totalAmount = 0;
-    if(product){
-        totalAmount = transaction.payment.quantity * product.price.doubleValue;
-    }
-    
-    if (TTCheckValidString(eventName)) {
-        [self logImplicitTransactionEvent:eventName valueToSum:totalAmount parameters:[self getEventParametersOfProduct:product withTransaction:transaction]];
+    @synchronized (TikTokBusiness.class) {
+        if (!self.consentGeneration || self.consentGeneration != [TikTokBusiness trackingConsentGeneration]) return;
+        NSString *eventName = nil;
+        switch (transaction.transactionState) {
+            case SKPaymentTransactionStatePurchasing:
+                eventName = @"Purchasing";
+                break;
+            case SKPaymentTransactionStatePurchased:
+                eventName = @"Purchase";
+                break;
+            case SKPaymentTransactionStateFailed:
+                eventName = @"PurchaseFailed";
+                break;
+            case SKPaymentTransactionStateRestored:
+                eventName = @"PurchaseRestored";
+                break;
+            case SKPaymentTransactionStateDeferred:
+                eventName = @"PurchaseDeferred";
+                break;
+        }
+
+        double totalAmount = 0;
+        if(product){
+            totalAmount = transaction.payment.quantity * product.price.doubleValue;
+        }
+
+        if (TTCheckValidString(eventName)) {
+            [self logImplicitTransactionEvent:eventName valueToSum:totalAmount parameters:[self getEventParametersOfProduct:product withTransaction:transaction]];
+        }
     }
 }
 
 - (void)logImplicitTransactionEvent: (NSString *)eventName valueToSum:(double)valueToSum parameters: (NSDictionary<NSString *, id>*)parameters
 {
-    NSMutableDictionary *eventParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
-    [TikTokTypeUtility dictionary:eventParameters setObject:[[NSNumber numberWithDouble:valueToSum] stringValue] forKey:@"value"];
-    [TikTokBusiness trackEvent:eventName withProperties:eventParameters];
-    
-    if ([TikTokBusiness isPayShowTrackEnabled]) {
-        [eventParameters setObject:@"enhanced_data_postback" forKey:@"monitor_type"];
-        [TikTokBusiness trackEvent:@"pay_show" withProperties:eventParameters.copy];
+    @synchronized (TikTokBusiness.class) {
+        if (!self.consentGeneration || self.consentGeneration != [TikTokBusiness trackingConsentGeneration]) return;
+        NSMutableDictionary *eventParameters = [NSMutableDictionary dictionaryWithDictionary:parameters];
+        [TikTokTypeUtility dictionary:eventParameters setObject:[[NSNumber numberWithDouble:valueToSum] stringValue] forKey:@"value"];
+        [TikTokBusiness trackEvent:eventName withProperties:eventParameters];
+
+        if ([TikTokBusiness isPayShowTrackEnabled]) {
+            [eventParameters setObject:@"enhanced_data_postback" forKey:@"monitor_type"];
+            [TikTokBusiness trackEvent:@"pay_show" withProperties:eventParameters.copy];
+        }
     }
 }
 

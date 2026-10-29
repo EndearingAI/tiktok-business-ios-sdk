@@ -23,6 +23,12 @@ static UIView *tempView;
 static long long touchStart;
 static long long previousTouch;
 
++ (void)TT_ClearUIApplicationEDPState {
+    tempView = nil;
+    touchStart = 0;
+    previousTouch = 0;
+}
+
 + (void)TT_StartUIApplicationEDPMonitoring {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -37,6 +43,8 @@ static long long previousTouch;
 
 - (void)hook_sendEvent:(UIEvent *)event {
     [self hook_sendEvent:event];
+    @synchronized (TikTokBusiness.class) {
+    if (![TikTokBusiness isTrackingEnabled]) { tempView = nil; return; }
     if (!([TikTokEDPConfig sharedConfig].enable_sdk && [TikTokEDPConfig sharedConfig].enable_from_ttconfig && [TikTokEDPConfig sharedConfig].enable_click_track)) {
         return;
     }
@@ -103,6 +111,7 @@ static long long previousTouch;
         }
         
         tempView = nil;
+    }
     }
 }
 

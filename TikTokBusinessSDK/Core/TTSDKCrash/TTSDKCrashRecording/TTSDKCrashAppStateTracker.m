@@ -125,19 +125,13 @@ bool ttsdkapp_transitionStateIsUserPerceptible(TTSDKCrashAppTransitionState stat
 
 @implementation TTSDKCrashAppStateTracker
 
-+ (void)load
-{
-    // to work well, we need this to run as early as possible.
-    (void)[TTSDKCrashAppStateTracker sharedInstance];
-}
-
 + (instancetype)sharedInstance
 {
     static TTSDKCrashAppStateTracker *sTracker;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sTracker = [[TTSDKCrashAppStateTracker alloc] init];
-        [sTracker start];
+
     });
     return sTracker;
 }
@@ -272,46 +266,8 @@ bool ttsdkapp_transitionStateIsUserPerceptible(TTSDKCrashAppTransitionState stat
     [self _setTransitionState:TTSDKCrashAppTransitionStateExiting];
 }
 
-- (void)start
-{
-    if (_registrations) {
-        return;
-    }
-
-    __weak typeof(self) weakMe = self;
-
-    // Register a normal `exit` callback so we don't think it's an OOM.
-    atexit_b(^{
-        [weakMe _exitCalled];
-    });
-
-#if TTSDKCRASH_HAS_UIAPPLICATION
-
-    // register all normal lifecycle events
-    // in the future, we could also look at scene lifecycle
-    // events but in reality, we don't actually need to,
-    // it could just give us more granularity.
-    _registrations = @[
-
-        OBSERVE(_center, UIApplicationDidFinishLaunchingNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateLaunching]; }),
-        OBSERVE(_center, UIApplicationWillEnterForegroundNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateForegrounding]; }),
-        OBSERVE(_center, UIApplicationDidBecomeActiveNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateActive]; }),
-        OBSERVE(_center, UIApplicationWillResignActiveNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateDeactivating]; }),
-        OBSERVE(_center, UIApplicationDidEnterBackgroundNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateBackground]; }),
-        OBSERVE(_center, UIApplicationWillTerminateNotification,
-                { [weakMe _setTransitionState:TTSDKCrashAppTransitionStateTerminating]; }),
-    ];
-
-#else
-    // on other platforms that don't have UIApplication
-    // we simply state that the app is active in order to report OOMs.
-    [self _setTransitionState:TTSDKCrashAppTransitionStateActive];
-#endif
+- (void)start {
+    // Automatic TikTok crash observation is disabled; the app owns crash reporting.
 }
 
 - (void)stop

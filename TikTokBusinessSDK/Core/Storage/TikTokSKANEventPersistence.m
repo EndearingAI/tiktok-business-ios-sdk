@@ -12,6 +12,7 @@
 #import "TikTokAppEvent.h"
 #import "TikTokBusinessSDKMacros.h"
 #import "TikTokTypeUtility.h"
+#import "TikTokBusiness+private.h"
 
 @interface TikTokSKANEventPersistence ()
 
@@ -46,25 +47,31 @@
 }
 
 - (BOOL)persistSKANEventWithName:(NSString *)eventName value:(NSNumber *)value currency:(nullable TTCurrency)currency {
-    if ([self.db openDatabase]) {
-        if (![self.db insertIntoTable:[[self class] tableName] fields:@{
-            @"event_name":TTSafeString(eventName),
-            @"event_value": value?:@(0),
-            @"currency": TTSafeString(currency)
-        }]) {
-            [self.db closeDatabase];
-            return NO;
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return NO;
+        if ([self.db openDatabase]) {
+            if (![self.db insertIntoTable:[[self class] tableName] fields:@{
+                @"event_name":TTSafeString(eventName),
+                @"event_value": value?:@(0),
+                @"currency": TTSafeString(currency)
+            }]) {
+                [self.db closeDatabase];
+                return NO;
+            }
         }
+        return YES;
     }
-    return YES;
 }
 
 - (NSArray *)retrievePersistedEvents {
-    NSArray *res = [NSArray array];
-    if ([self.db openDatabase]) {
-        res = [self.db queryTable:[[self class] tableName] withWhere:nil orderBy:TTDBOrderByNone limit:TTDBLimitNone];
+    @synchronized (TikTokBusiness.class) {
+        if (![TikTokBusiness isTrackingEnabled]) return @[];
+        NSArray *res = [NSArray array];
+        if ([self.db openDatabase]) {
+            res = [self.db queryTable:[[self class] tableName] withWhere:nil orderBy:TTDBOrderByNone limit:TTDBLimitNone];
+        }
+        return res.copy;
     }
-    return res.copy;
 }
 
 @end

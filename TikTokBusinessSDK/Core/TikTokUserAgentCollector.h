@@ -15,15 +15,16 @@ NS_ASSUME_NONNULL_BEGIN
 */
 @interface TikTokUserAgentCollector : NSObject
 
-@property (nonatomic, copy, readwrite) NSString *userAgent;
+@property (nonatomic, copy, readwrite, nullable) NSString *userAgent;
 
 + (TikTokUserAgentCollector *)singleton;
 
 /**
  * @brief Handles asynchronous Javascript call to the WebKit browser
 */
-- (void)loadUserAgentWithCompletion:(void(^)(NSString * _Nullable userAgent))completion;
+- (void)loadUserAgentWithCompletion:(void(^_Nullable)(NSString * _Nullable userAgent))completion;
 - (void)setCustomUserAgent:(NSString *)userAgent;
+- (void)clearUserAgent;
 
 @end
 

@@ -31,6 +31,8 @@
 
 - (void)hook_viewDidAppear:(BOOL)animated {
     [self hook_viewDidAppear:animated];
+    @synchronized (TikTokBusiness.class) {
+    if (![TikTokBusiness isTrackingEnabled]) return;
     if (!([TikTokEDPConfig sharedConfig].enable_sdk && [TikTokEDPConfig sharedConfig].enable_from_ttconfig && [TikTokEDPConfig sharedConfig].enable_page_show_track)) {
         return;
     }
@@ -47,6 +49,7 @@
     };
     [TikTokBusiness trackEvent:@"page_show" withProperties:pageShowProperties];
     pageIndex++;
+    }
 }
 
 static inline void TTSwizzleSelector(Class class, SEL originalSelector, SEL swizzledSelector) {

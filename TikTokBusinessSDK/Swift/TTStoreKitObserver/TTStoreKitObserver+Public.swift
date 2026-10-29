@@ -14,8 +14,10 @@ public extension TTStoreKitObserver {
 @available(iOS 15.0, *)
 public extension TikTokBusiness {
     @objc func trackStoreKit2PurchaseFailed(productId: String) {
+        let consent = TTTrackingConsent()
+        guard consent.isCurrent else { return }
         Task.detached {
-            await TTStoreKitObserver.shared.handleFailed(productId)
+            await TTStoreKitObserver.shared.handleFailed(productId, consent: consent)
         }
     }
 }
